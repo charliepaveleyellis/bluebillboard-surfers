@@ -77,7 +77,7 @@ window.addEventListener('resize',resize);resize();
 var LANES=[-1,0,1]; // left, center, right
 var LANE_W=70;       // lane width at bottom
 var BASE_SPEED=4;
-var MAX_SPEED=12;
+var MAX_SPEED=20;
 var GRAVITY=0.8;
 var JUMP_FORCE=-14;
 var GROUND_Y_PCT=0.78; // ground line as % of canvas height
@@ -133,26 +133,44 @@ var endScreen=document.getElementById('endScreen');
 // ─── OBSTACLE TYPES ──────────────────────────────
 // type: 'billboard' (jump over), 'barrier' (slide under), 'van' (full block - switch lane)
 function spawnRow(){
-  var dist=distance+80;
+  // Difficulty scales with distance
+  var diff=Math.min(distance/500,1); // 0 to 1 over 500m
 
-  // Decide what to spawn
   var r=Math.random();
-  if(r<0.35){
-    // Single obstacle in random lane
+
+  if(r<0.25-diff*0.1){
+    // Single obstacle in random lane (easier — less common later)
     var lane=LANES[Math.floor(Math.random()*3)];
     var type=Math.random()<0.5?'billboard':'barrier';
     obstacles.push({lane:lane,z:1.1,type:type,hit:false});
-  } else if(r<0.6){
+  } else if(r<0.45){
     // Van blocks one lane
     var lane=LANES[Math.floor(Math.random()*3)];
     obstacles.push({lane:lane,z:1.1,type:'van',hit:false});
-  } else if(r<0.8){
-    // Two obstacles, different lanes
+  } else if(r<0.65+diff*0.1){
+    // Two obstacles, different lanes (more common later)
     var lanes=[0,1,2];
     var l1=lanes.splice(Math.floor(Math.random()*3),1)[0];
     var l2=lanes[Math.floor(Math.random()*2)];
     obstacles.push({lane:LANES[l1],z:1.1,type:Math.random()<0.5?'billboard':'van',hit:false});
     obstacles.push({lane:LANES[l2],z:1.12,type:Math.random()<0.5?'barrier':'billboard',hit:false});
+  } else if(r<0.75+diff*0.15){
+    // Two vans — only one lane free (hard — more common with distance)
+    var freeLane=Math.floor(Math.random()*3);
+    for(var i=0;i<3;i++){
+      if(i!==freeLane) obstacles.push({lane:LANES[i],z:1.1,type:'van',hit:false});
+    }
+  } else if(r<0.8+diff*0.05){
+    // Jump-slide combo: billboard in one lane, barrier in another
+    var lanes=[0,1,2];
+    var l1=lanes.splice(Math.floor(Math.random()*3),1)[0];
+    var l2=lanes[Math.floor(Math.random()*2)];
+    obstacles.push({lane:LANES[l1],z:1.1,type:'billboard',hit:false});
+    obstacles.push({lane:LANES[l2],z:1.1,type:'barrier',hit:false});
+    // Third lane gets a coin reward
+    var l3;
+    for(var i=0;i<3;i++){if(i!==l1&&i!==l2){l3=i;break;}}
+    coinItems.push({lane:LANES[l3],z:1.1,collected:false});
   } else {
     // Coin row
     var lane=LANES[Math.floor(Math.random()*3)];
@@ -619,10 +637,12 @@ function gameLoop(){
   drawRoad();
 
   if(!gameOver){
-    // Speed ramp
-    speed=Math.min(MAX_SPEED,BASE_SPEED+distance*0.003);
+    // Speed ramp — gets harder forever
+    speed=Math.min(MAX_SPEED,BASE_SPEED+distance*0.002);
     distance+=speed*0.05;
     score+=speed*0.1;
+    // Tighten spawn gap as distance increases
+    SPAWN_GAP=Math.max(10,25-distance*0.008);
 
     // Player physics
     if(player.jumping){
