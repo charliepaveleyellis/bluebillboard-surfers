@@ -561,39 +561,34 @@ function spawnParticles(x,y,color,count){
 
 // ─── COLLISION ────────────────────────────────────
 function checkCollisions(){
-  var pz=0.15;
-  var pLane=player.targetLane;
-  var hitZone=0.04;
+  // Only collide when obstacle is right at the player (z near 0, not 0.15)
+  var pLane=player.lane; // use ACTUAL lane, not target
 
   for(var i=0;i<obstacles.length;i++){
     var o=obstacles[i];
     if(o.hit) continue;
-    if(o.z>pz+hitZone||o.z<pz-hitZone) continue;
+    // Obstacle must be very close (past the player position, z < 0.18 and z > 0.05)
+    if(o.z>0.18||o.z<0.05) continue;
     if(o.lane!==pLane) continue;
 
-    // In same lane and same depth
     if(o.type==='billboard'){
-      // Can jump over
       if(player.jumping&&player.y<-20) continue;
       o.hit=true; crash(); return;
     }
     else if(o.type==='barrier'){
-      // Can slide under
       if(player.sliding) continue;
       o.hit=true; crash(); return;
     }
     else if(o.type==='van'){
-      // Must dodge — no way through
       if(player.invincible>0) continue;
       o.hit=true; crash(); return;
     }
   }
 
-  // Coin collection
   for(var i=0;i<coinItems.length;i++){
     var c=coinItems[i];
     if(c.collected) continue;
-    if(c.z>pz+hitZone||c.z<pz-hitZone-0.01) continue;
+    if(c.z>0.20||c.z<0.05) continue;
     if(c.lane!==pLane) continue;
     c.collected=true;
     coins++;score+=50;
@@ -611,41 +606,21 @@ function crash(){
   var fs=Math.floor(score);
   if(fs>highScore){highScore=fs;localStorage.setItem('bb_surfer_hi',highScore.toString());}
 
-  // Keep rendering during death animation
-  var deathFrames=0;
-  function deathLoop(){
-    deathFrames++;
-    X.clearRect(0,0,C.width,C.height);
-    drawSky();drawRoad();
+  // Crash particles at player position
+  var px=player.laneX;
+  var py=zToY(0.15)+player.y-25;
+  spawnParticles(px,py,'#297ff0',15);
+  spawnParticles(px,py,'#ff5a4d',10);
 
-    // Still draw everything
-    var allItems=[];
-    for(var i=0;i<obstacles.length;i++) allItems.push({z:obstacles[i].z,type:'obs',idx:i});
-    for(var i=0;i<coinItems.length;i++){
-      if(!coinItems[i].collected) allItems.push({z:coinItems[i].z,type:'coin',idx:i});
-    }
-    allItems.sort(function(a,b){return b.z-a.z;});
-    for(var i=0;i<allItems.length;i++){
-      if(allItems[i].type==='obs') drawObstacle(obstacles[allItems[i].idx]);
-      else drawCoin(coinItems[allItems[i].idx]);
-    }
-    drawParticles();
-
-    // Flash red on screen during death
-    X.fillStyle='rgba(255,50,50,'+(0.3-deathFrames*0.015)+')';
-    X.fillRect(0,0,C.width,C.height);
-
-    if(deathFrames<20) requestAnimationFrame(deathLoop);
-    else {
-      running=false;
-      C.style.pointerEvents='none';
-      document.getElementById('finalScore').textContent=fs;
-      document.getElementById('highDisp').textContent='BEST: '+highScore;
-      document.getElementById('statsDisp').textContent=coins+' coins | '+Math.floor(distance)+'m';
-      endScreen.classList.remove('hidden');
-    }
-  }
-  deathLoop();
+  // Show end screen after a short visible delay (game keeps rendering via gameLoop)
+  setTimeout(function(){
+    running=false;
+    C.style.pointerEvents='none';
+    document.getElementById('finalScore').textContent=fs;
+    document.getElementById('highDisp').textContent='BEST: '+highScore;
+    document.getElementById('statsDisp').textContent=coins+' coins | '+Math.floor(distance)+'m';
+    endScreen.classList.remove('hidden');
+  },800);
 
   // Crash particles
   var pz=0.08;
