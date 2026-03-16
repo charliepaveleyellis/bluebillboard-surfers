@@ -406,7 +406,7 @@ function drawCoin(c){
 }
 
 function drawPlayer(){
-  var z=0.08; // player depth
+  var z=0.15; // player depth
   var y=zToY(z);
   var s=scaleAt(z);
   var px=laneX(player.lane,z);
@@ -561,10 +561,9 @@ function spawnParticles(x,y,color,count){
 
 // ─── COLLISION ────────────────────────────────────
 function checkCollisions(){
-  var pz=0.08;
+  var pz=0.15;
   var pLane=player.targetLane;
-  // Wider hit zone at high speeds so obstacles can't skip past
-  var hitZone=0.03+speed*0.002;
+  var hitZone=0.04;
 
   for(var i=0;i<obstacles.length;i++){
     var o=obstacles[i];
@@ -594,7 +593,7 @@ function checkCollisions(){
   for(var i=0;i<coinItems.length;i++){
     var c=coinItems[i];
     if(c.collected) continue;
-    if(c.z>pz+0.03||c.z<pz-0.04) continue;
+    if(c.z>pz+hitZone||c.z<pz-hitZone-0.01) continue;
     if(c.lane!==pLane) continue;
     c.collected=true;
     coins++;score+=50;
@@ -632,7 +631,11 @@ function crash(){
     }
     drawParticles();
 
-    if(deathFrames<40) requestAnimationFrame(deathLoop);
+    // Flash red on screen during death
+    X.fillStyle='rgba(255,50,50,'+(0.3-deathFrames*0.015)+')';
+    X.fillRect(0,0,C.width,C.height);
+
+    if(deathFrames<20) requestAnimationFrame(deathLoop);
     else {
       running=false;
       C.style.pointerEvents='none';
@@ -712,7 +715,7 @@ function gameLoop(){
   var playerDrawn=false;
   for(var i=0;i<allItems.length;i++){
     // Draw player at correct depth
-    if(!playerDrawn&&allItems[i].z<0.08){
+    if(!playerDrawn&&allItems[i].z<0.15){
       drawPlayer();playerDrawn=true;
     }
     if(allItems[i].type==='obs') drawObstacle(obstacles[allItems[i].idx]);
@@ -742,7 +745,7 @@ function startGame(){
     player.switchAnim=0;player.invincible=0;
 
     resize();setupPerspective();
-    player.laneX=laneX(0,0.08);
+    player.laneX=laneX(0,0.15);
 
     startScreen.classList.add('hidden');
     endScreen.classList.add('hidden');
