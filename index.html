@@ -563,11 +563,13 @@ function spawnParticles(x,y,color,count){
 function checkCollisions(){
   var pz=0.08;
   var pLane=player.targetLane;
+  // Wider hit zone at high speeds so obstacles can't skip past
+  var hitZone=0.03+speed*0.002;
 
   for(var i=0;i<obstacles.length;i++){
     var o=obstacles[i];
     if(o.hit) continue;
-    if(o.z>pz+0.03||o.z<pz-0.03) continue;
+    if(o.z>pz+hitZone||o.z<pz-hitZone) continue;
     if(o.lane!==pLane) continue;
 
     // In same lane and same depth
@@ -610,14 +612,37 @@ function crash(){
   var fs=Math.floor(score);
   if(fs>highScore){highScore=fs;localStorage.setItem('bb_surfer_hi',highScore.toString());}
 
-  setTimeout(function(){
-    running=false;
-    C.style.pointerEvents='none';
-    document.getElementById('finalScore').textContent=fs;
-    document.getElementById('highDisp').textContent='BEST: '+highScore;
-    document.getElementById('statsDisp').textContent=coins+' coins | '+Math.floor(distance)+'m';
-    endScreen.classList.remove('hidden');
-  },600);
+  // Keep rendering during death animation
+  var deathFrames=0;
+  function deathLoop(){
+    deathFrames++;
+    X.clearRect(0,0,C.width,C.height);
+    drawSky();drawRoad();
+
+    // Still draw everything
+    var allItems=[];
+    for(var i=0;i<obstacles.length;i++) allItems.push({z:obstacles[i].z,type:'obs',idx:i});
+    for(var i=0;i<coinItems.length;i++){
+      if(!coinItems[i].collected) allItems.push({z:coinItems[i].z,type:'coin',idx:i});
+    }
+    allItems.sort(function(a,b){return b.z-a.z;});
+    for(var i=0;i<allItems.length;i++){
+      if(allItems[i].type==='obs') drawObstacle(obstacles[allItems[i].idx]);
+      else drawCoin(coinItems[allItems[i].idx]);
+    }
+    drawParticles();
+
+    if(deathFrames<40) requestAnimationFrame(deathLoop);
+    else {
+      running=false;
+      C.style.pointerEvents='none';
+      document.getElementById('finalScore').textContent=fs;
+      document.getElementById('highDisp').textContent='BEST: '+highScore;
+      document.getElementById('statsDisp').textContent=coins+' coins | '+Math.floor(distance)+'m';
+      endScreen.classList.remove('hidden');
+    }
+  }
+  deathLoop();
 
   // Crash particles
   var pz=0.08;
@@ -641,8 +666,8 @@ function gameLoop(){
     speed=Math.min(MAX_SPEED,BASE_SPEED+distance*0.002);
     distance+=speed*0.05;
     score+=speed*0.1;
-    // Tighten spawn gap as distance increases
-    SPAWN_GAP=Math.max(10,25-distance*0.008);
+    // Tighten spawn gap as distance increases (never below 14 so patterns are survivable)
+    SPAWN_GAP=Math.max(14,25-distance*0.005);
 
     // Player physics
     if(player.jumping){
