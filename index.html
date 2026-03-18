@@ -241,37 +241,42 @@ function drawSky(){
     X.fillRect(sx,sy,1.5,1.5);
   }
 
-  // ── CITY SKYLINE — tall buildings filling the horizon ──
+  // ── CITY SKYLINE — bright visible buildings ──
   setupPerspective();
-  var skyBase=VP_Y+15; // where buildings sit on the horizon
-  var bw=C.width/16;
-  for(var i=0;i<17;i++){
+  var skyBase=VP_Y+20;
+  var bw=C.width/14;
+  for(var i=0;i<15;i++){
     var bx=i*bw;
     var seed=((i*47+13)&0xFF);
-    var bh=50+(seed%6)*25+((seed*3)%5)*15; // taller: 50-165px
-    // Building body
-    X.fillStyle='#060e1e';
-    X.fillRect(bx,skyBase-bh,bw-2,bh+20);
-    // Rooftop neon line
-    X.fillStyle='rgba(46,163,242,0.3)';
-    X.fillRect(bx,skyBase-bh,bw-2,2);
-    // Windows — bright grid
-    for(var wy=skyBase-bh+6;wy<skyBase;wy+=7){
-      for(var wx=bx+2;wx<bx+bw-4;wx+=6){
+    var bh=60+(seed%6)*30+((seed*3)%5)*20;
+    // Building body — visible dark blue (not black)
+    X.fillStyle='#0c1a30';
+    X.fillRect(bx,skyBase-bh,bw-3,bh+25);
+    // Bright rooftop neon line
+    X.fillStyle='rgba(46,163,242,0.7)';
+    X.fillRect(bx,skyBase-bh,bw-3,3);
+    // Side edge glow
+    X.fillStyle='rgba(46,163,242,0.2)';
+    X.fillRect(bx,skyBase-bh,2,bh+25);
+    X.fillRect(bx+bw-5,skyBase-bh,2,bh+25);
+    // Windows — bright and dense
+    for(var wy=skyBase-bh+8;wy<skyBase;wy+=8){
+      for(var wx=bx+4;wx<bx+bw-6;wx+=7){
         var ws=((wx*31+wy*17+seed)&0xFF);
-        if(ws>100){
-          X.fillStyle=ws>200?'rgba(46,163,242,0.35)':
-                     ws>160?'rgba(0,255,102,0.2)':
-                     'rgba(255,221,0,0.15)';
-          X.fillRect(wx,wy,3,4);
+        if(ws>80){
+          X.fillStyle=ws>200?'rgba(46,163,242,0.6)':
+                     ws>150?'rgba(0,255,255,0.4)':
+                     ws>120?'rgba(0,255,102,0.3)':
+                     'rgba(255,221,0,0.25)';
+          X.fillRect(wx,wy,4,5);
         }
       }
     }
   }
 
-  // Horizon glow
-  X.fillStyle='rgba(46,163,242,0.1)';
-  X.fillRect(0,skyBase-10,C.width,30);
+  // Bright horizon glow line
+  X.fillStyle='rgba(46,163,242,0.15)';
+  X.fillRect(0,skyBase-5,C.width,20);
 }
 
 function drawRoad(){
