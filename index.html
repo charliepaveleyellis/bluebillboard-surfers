@@ -270,7 +270,7 @@ function drawSky(){
   X.fillStyle='rgba(46,163,242,0.08)';
   X.fillRect(0,skyY-8,C.width,25);
 
-  // ── PERSPECTIVE BUILDINGS on road sides — move toward you ──
+  // ── TALL BUILDINGS on road sides — fill from road edge to screen edge ──
   var buildSpacing=0.4;
   var firstBuildZ=Math.floor(camZ/buildSpacing)*buildSpacing;
 
@@ -281,36 +281,65 @@ function drawSky(){
     var by=zToY(bz);
     var bs=scaleAt(bz);
     if(bs<0.03) continue;
-    var ba=Math.min(1,bs*2.5+0.3);
+    var ba=Math.min(1,bs*3+0.3);
 
-    var bLeftX=laneX(-1.5,bz)-15*bs;
-    var bRightX=laneX(1.5,bz)+5*bs;
+    // Road edges at this z
+    var roadL=laneX(-1.5,bz)-12*bs;
+    var roadR=laneX(1.5,bz)+12*bs;
 
     var bSeed=Math.abs(Math.floor(bWorldZ*1000)*13+7);
-    var bh=(35+(bSeed%5)*18+((bSeed*7)%4)*12)*bs;
-    var bw2=Math.max(8,(25+(bSeed%3)*12)*bs);
+    var bh=Math.max(20,(50+(bSeed%5)*20+((bSeed*7)%4)*15)*bs);
 
-    // Left building
-    X.fillStyle='rgba(8,15,30,'+ba+')';
-    X.fillRect(bLeftX-bw2,by-bh,bw2,bh);
-    X.fillStyle='rgba(46,163,242,'+ba*0.2+')';
-    X.fillRect(bLeftX-bw2,by-bh,bw2,Math.max(2,2*bs));
-    for(var wy=by-bh+4*bs;wy<by-2*bs;wy+=Math.max(5,8*bs)){
-      if(((bSeed+Math.floor(wy*10))%3)===0){
-        X.fillStyle='rgba(46,163,242,'+ba*0.3+')';
-        X.fillRect(bLeftX-bw2+3*bs,wy,Math.max(3,6*bs),Math.max(3,5*bs));
+    // Left building — from screen left edge to road left edge
+    var lw=Math.max(10,roadL);
+    X.fillStyle='rgba(10,18,35,'+ba+')';
+    X.fillRect(0,by-bh,lw,bh);
+    // Neon roof line
+    X.fillStyle='rgba(46,163,242,'+ba*0.4+')';
+    X.fillRect(0,by-bh,lw,Math.max(2,3*bs));
+    // Neon vertical edge facing road
+    X.fillRect(lw-Math.max(2,2*bs),by-bh,Math.max(2,2*bs),bh);
+    // Windows — grid pattern
+    var winW=Math.max(3,8*bs),winH=Math.max(3,6*bs),winGap=Math.max(6,12*bs);
+    for(var wy=by-bh+Math.max(5,8*bs);wy<by-4;wy+=winGap){
+      for(var wx=Math.max(3,lw-50*bs);wx<lw-Math.max(4,6*bs);wx+=Math.max(8,14*bs)){
+        var ws=((bSeed+Math.floor(wy*7)+Math.floor(wx*3))%4);
+        if(ws===0){
+          X.fillStyle='rgba(46,163,242,'+ba*0.4+')';
+          X.fillRect(wx,wy,winW,winH);
+        } else if(ws===1){
+          X.fillStyle='rgba(0,255,102,'+ba*0.2+')';
+          X.fillRect(wx,wy,winW,winH);
+        } else if(ws===2){
+          X.fillStyle='rgba(255,221,0,'+ba*0.15+')';
+          X.fillRect(wx,wy,winW,winH);
+        }
       }
     }
 
-    // Right building
-    X.fillStyle='rgba(8,15,30,'+ba+')';
-    X.fillRect(bRightX,by-bh,bw2,bh);
-    X.fillStyle='rgba(46,163,242,'+ba*0.2+')';
-    X.fillRect(bRightX,by-bh,bw2,Math.max(2,2*bs));
-    for(var wy=by-bh+4*bs;wy<by-2*bs;wy+=Math.max(5,8*bs)){
-      if(((bSeed+Math.floor(wy*10)+5)%3)===0){
-        X.fillStyle='rgba(0,255,102,'+ba*0.2+')';
-        X.fillRect(bRightX+3*bs,wy,Math.max(3,6*bs),Math.max(3,5*bs));
+    // Right building — from road right edge to screen right edge
+    var rw=Math.max(10,C.width-roadR);
+    X.fillStyle='rgba(10,18,35,'+ba+')';
+    X.fillRect(roadR,by-bh,rw,bh);
+    // Neon roof line
+    X.fillStyle='rgba(0,255,255,'+ba*0.3+')';
+    X.fillRect(roadR,by-bh,rw,Math.max(2,3*bs));
+    // Neon vertical edge facing road
+    X.fillRect(roadR,by-bh,Math.max(2,2*bs),bh);
+    // Windows
+    for(var wy=by-bh+Math.max(5,8*bs);wy<by-4;wy+=winGap){
+      for(var wx=roadR+Math.max(4,6*bs);wx<roadR+rw-winW;wx+=Math.max(8,14*bs)){
+        var ws=((bSeed+Math.floor(wy*7)+Math.floor(wx*3)+5)%4);
+        if(ws===0){
+          X.fillStyle='rgba(46,163,242,'+ba*0.4+')';
+          X.fillRect(wx,wy,winW,winH);
+        } else if(ws===1){
+          X.fillStyle='rgba(255,51,85,'+ba*0.2+')';
+          X.fillRect(wx,wy,winW,winH);
+        } else if(ws===2){
+          X.fillStyle='rgba(0,255,102,'+ba*0.15+')';
+          X.fillRect(wx,wy,winW,winH);
+        }
       }
     }
   }
