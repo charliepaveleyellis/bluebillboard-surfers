@@ -351,7 +351,7 @@ function drawRoad(){
   // Road surface — semi-transparent so camera shows through
   var roadEdgeL=laneX(-1.5,0)-30;
   var roadEdgeR=laneX(1.5,0)+30;
-  X.fillStyle='rgba(10,10,30,0.55)';
+  X.fillStyle='#1a1a30';
   X.beginPath();
   X.moveTo(VP_X-5,VP_Y);
   X.lineTo(roadEdgeL,ROAD_BOT+20);
@@ -362,8 +362,8 @@ function drawRoad(){
 
   // Road surface gradient overlay
   var roadGrad=X.createLinearGradient(0,ROAD_TOP,0,ROAD_BOT);
-  roadGrad.addColorStop(0,'rgba(0,30,80,0.12)');
-  roadGrad.addColorStop(1,'rgba(0,30,80,0.25)');
+  roadGrad.addColorStop(0,'rgba(0,30,80,0.15)');
+  roadGrad.addColorStop(1,'rgba(0,30,80,0.3)');
   X.fillStyle=roadGrad;
   X.fill();
 
@@ -417,7 +417,7 @@ function drawRoad(){
   }
 
   // Sidewalk/ground beyond road edges — semi-transparent
-  X.fillStyle='rgba(8,8,26,0.45)';
+  X.fillStyle='#08081a';
   X.fillRect(0,ROAD_BOT,C.width,C.height-ROAD_BOT);
 
   // ── SIDE SCENERY — big, bright, scrolling toward you ──
