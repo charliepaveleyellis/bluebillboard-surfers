@@ -97,12 +97,12 @@ function setupPerspective(){
 
 // Map a z-depth (0=near, 1=far) to screen Y
 function zToY(z){ return ROAD_BOT-(ROAD_BOT-ROAD_TOP)*z; }
-// Scale at a given z
-function scaleAt(z){ return 1-z*0.85; }
-// Lane X position at a given z
+// Scale at a given z — gentler falloff so objects visible from further away
+function scaleAt(z){ return Math.max(0,1-z*0.55); }
+// Lane X position at a given z — straight perspective lines toward vanishing point
 function laneX(lane,z){
   var s=scaleAt(z);
-  return VP_X+lane*LANE_W*s*(1+z*1.5);
+  return VP_X+lane*LANE_W*s;
 }
 
 // ─── STATE ────────────────────────────────────────
@@ -142,40 +142,40 @@ function spawnRow(){
     // Single obstacle in random lane (easier — less common later)
     var lane=LANES[Math.floor(Math.random()*3)];
     var type=Math.random()<0.5?'billboard':'barrier';
-    obstacles.push({lane:lane,z:1.1,type:type,hit:false});
+    obstacles.push({lane:lane,z:1.6,type:type,hit:false});
   } else if(r<0.45){
     // Van blocks one lane
     var lane=LANES[Math.floor(Math.random()*3)];
-    obstacles.push({lane:lane,z:1.1,type:'van',hit:false});
+    obstacles.push({lane:lane,z:1.6,type:'van',hit:false});
   } else if(r<0.65+diff*0.1){
     // Two obstacles, different lanes (more common later)
     var lanes=[0,1,2];
     var l1=lanes.splice(Math.floor(Math.random()*3),1)[0];
     var l2=lanes[Math.floor(Math.random()*2)];
     obstacles.push({lane:LANES[l1],z:1.1,type:Math.random()<0.5?'billboard':'van',hit:false});
-    obstacles.push({lane:LANES[l2],z:1.12,type:Math.random()<0.5?'barrier':'billboard',hit:false});
+    obstacles.push({lane:LANES[l2],z:1.62,type:Math.random()<0.5?'barrier':'billboard',hit:false});
   } else if(r<0.75+diff*0.15){
     // Two vans — only one lane free (hard — more common with distance)
     var freeLane=Math.floor(Math.random()*3);
     for(var i=0;i<3;i++){
-      if(i!==freeLane) obstacles.push({lane:LANES[i],z:1.1,type:'van',hit:false});
+      if(i!==freeLane) obstacles.push({lane:LANES[i],z:1.6,type:'van',hit:false});
     }
   } else if(r<0.8+diff*0.05){
     // Jump-slide combo: billboard in one lane, barrier in another
     var lanes=[0,1,2];
     var l1=lanes.splice(Math.floor(Math.random()*3),1)[0];
     var l2=lanes[Math.floor(Math.random()*2)];
-    obstacles.push({lane:LANES[l1],z:1.1,type:'billboard',hit:false});
-    obstacles.push({lane:LANES[l2],z:1.1,type:'barrier',hit:false});
+    obstacles.push({lane:LANES[l1],z:1.6,type:'billboard',hit:false});
+    obstacles.push({lane:LANES[l2],z:1.6,type:'barrier',hit:false});
     // Third lane gets a coin reward
     var l3;
     for(var i=0;i<3;i++){if(i!==l1&&i!==l2){l3=i;break;}}
-    coinItems.push({lane:LANES[l3],z:1.1,collected:false});
+    coinItems.push({lane:LANES[l3],z:1.6,collected:false});
   } else {
     // Coin row
     var lane=LANES[Math.floor(Math.random()*3)];
     for(var i=0;i<5;i++){
-      coinItems.push({lane:lane,z:1.1+i*0.04,collected:false});
+      coinItems.push({lane:lane,z:1.6+i*0.04,collected:false});
     }
   }
 }
