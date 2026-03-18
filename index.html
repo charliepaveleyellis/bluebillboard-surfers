@@ -311,6 +311,7 @@ function drawRoad(){
 }
 
 function drawObstacle(o){
+  if(o.z===undefined||!isFinite(o.z)||o.z>1.8) return;
   var y=zToY(o.z);
   var s=scaleAt(o.z);
   if(s<=0) return;
@@ -385,6 +386,7 @@ function drawObstacle(o){
 }
 
 function drawCoin(c){
+  if(c.z===undefined||!isFinite(c.z)||c.z>1.8) return;
   var y=zToY(c.z);
   var s=scaleAt(c.z);
   if(s<=0) return;
@@ -680,6 +682,9 @@ function gameLoop(){
     if(lastSpawnDist>SPAWN_GAP){
       lastSpawnDist=0;
       spawnRow();
+      // Compute z for newly spawned items immediately
+      for(var i=0;i<obstacles.length;i++) obstacles[i].z=obstacles[i].wz-camZ;
+      for(var i=0;i<coinItems.length;i++) coinItems[i].z=coinItems[i].wz-camZ;
     }
 
     checkCollisions();
