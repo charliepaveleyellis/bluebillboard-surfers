@@ -238,21 +238,24 @@ function drawSky(){
   X.fillStyle=grad;
   X.fillRect(0,0,C.width,C.height*0.5);
 
-  // City skyline silhouette
-  X.fillStyle='#001529';
+  // City skyline silhouette — scrolls slowly (parallax)
   var skyY=VP_Y-10;
   var bw=C.width/15;
-  for(var i=0;i<16;i++){
-    var bh=20+((i*7+3)%5)*15+((i*13)%4)*10;
-    X.fillRect(i*bw-2,skyY-bh,bw-4,bh+10);
-    // Windows
+  var skyScroll=(camZ*20)%(bw*2); // slow parallax
+  for(var i=-2;i<18;i++){
+    var bx=i*bw-skyScroll;
+    var seed=((i+1000)*7+3); // consistent per-building
+    var bh=20+(seed%5)*15+((seed*13)%4)*10;
+    X.fillStyle='#001529';
+    X.fillRect(bx-2,skyY-bh,bw-4,bh+10);
+    // Windows — use seed not random so they don't flicker
     X.fillStyle='rgba(42,163,242,0.15)';
     for(var wy=skyY-bh+5;wy<skyY;wy+=8){
-      for(var wx=i*bw+2;wx<(i+1)*bw-6;wx+=7){
-        if(Math.random()>0.4) X.fillRect(wx,wy,3,4);
+      for(var wx=bx+2;wx<bx+bw-6;wx+=7){
+        var wseed=((Math.floor(wx)*31+Math.floor(wy)*17)&0xFF);
+        if(wseed>100) X.fillRect(wx,wy,3,4);
       }
     }
-    X.fillStyle='#001529';
   }
 }
 
@@ -276,8 +279,8 @@ function drawRoad(){
   X.fillStyle=roadGrad;
   X.fill();
 
-  // Lane lines
-  var lineScroll=(frameCount*speed*2)%40;
+  // Lane lines — scroll toward player using camZ
+  var lineScroll=(camZ*500)%40;
   for(var z=0;z<1;z+=0.02){
     var y=zToY(z);
     var s=scaleAt(z);
@@ -294,20 +297,36 @@ function drawRoad(){
     X.fillRect(lx2-w/2,y,w,2);
   }
 
-  // Road edges (glowing)
+  // Road edges (glowing) — scroll toward player
+  var edgeScroll=(camZ*300)%20;
   for(var z=0;z<1;z+=0.01){
     var y=zToY(z);
     var s=scaleAt(z);
     var lxL=laneX(-1.5,z)-10*s;
     var lxR=laneX(1.5,z)+10*s;
-    X.fillStyle='rgba(42,163,242,'+(0.3*s)+')';
+    // Scrolling edge dashes
+    var edgeSeg=((z*300+edgeScroll)%20)/20;
+    var edgeAlpha=edgeSeg<0.6?(0.3*s):0;
+    X.fillStyle='rgba(42,163,242,'+edgeAlpha+')';
     X.fillRect(lxL,y,3*s,2);
     X.fillRect(lxR,y,3*s,2);
   }
 
-  // Ground beyond road
+  // Ground texture — scrolling dots for sense of movement
+  var groundScroll=(camZ*80)%30;
   X.fillStyle='#0a0a1a';
   X.fillRect(0,ROAD_BOT,C.width,C.height-ROAD_BOT);
+  for(var gy=ROAD_BOT+5;gy<C.height;gy+=15){
+    for(var gx=0;gx<C.width;gx+=25){
+      var gy2=gy+groundScroll;
+      if(gy2>C.height) gy2-=C.height-ROAD_BOT;
+      var gseed=((gx*17+Math.floor(gy)*31)&0xFF);
+      if(gseed>200){
+        X.fillStyle='rgba(0,61,122,0.06)';
+        X.fillRect(gx,gy2,2,2);
+      }
+    }
+  }
 }
 
 function drawObstacle(o){
