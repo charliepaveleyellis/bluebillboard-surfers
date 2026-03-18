@@ -83,26 +83,27 @@ window.addEventListener('resize',resize);resize();
 
 // ─── GAME CONFIG ──────────────────────────────────
 var LANES=[-1,0,1];
-var LANE_W=110;
+var LANE_W;          // set dynamically based on screen width
 var BASE_SPEED=4;
 var MAX_SPEED=20;
 var GRAVITY=0.8;
 var JUMP_FORCE=-14;
-var GROUND_Y_PCT=0.78;
+var GROUND_Y_PCT=0.85; // road goes further down the screen
 
 var VP_Y,VP_X,ROAD_TOP,ROAD_BOT;
 
 function setupPerspective(){
   VP_X=C.width/2;
-  VP_Y=C.height*0.28;
-  ROAD_TOP=VP_Y+20;
+  VP_Y=C.height*0.30;
+  ROAD_TOP=VP_Y+10;
   ROAD_BOT=C.height*GROUND_Y_PCT;
+  LANE_W=C.width*0.28; // lanes are 28% of screen width — fills the screen
 }
 
 function zToY(z){ return ROAD_BOT-(ROAD_BOT-ROAD_TOP)*z; }
 function scaleAt(z){ return Math.max(0,1-z*0.55); }
 function laneX(lane,z){
-  var p=1/(1+z*3);
+  var p=1/(1+z*2.5); // gentler perspective — road stays wider longer
   return VP_X+lane*LANE_W*p;
 }
 
@@ -278,13 +279,17 @@ function drawSky(){
 function drawRoad(){
   setupPerspective();
 
-  // Road surface — dark with subtle grid
-  X.fillStyle='#0a0a18';
+  // Road surface — wide, filling the screen
+  var roadEdgeL=laneX(-1.5,0)-30;
+  var roadEdgeR=laneX(1.5,0)+30;
+  var roadTopL=laneX(-1.5,0.95);
+  var roadTopR=laneX(1.5,0.95);
+  X.fillStyle='#111122';
   X.beginPath();
-  X.moveTo(VP_X-5,ROAD_TOP);
-  X.lineTo(0,ROAD_BOT+60);
-  X.lineTo(C.width,ROAD_BOT+60);
-  X.lineTo(VP_X+5,ROAD_TOP);
+  X.moveTo(roadTopL-10,ROAD_TOP);
+  X.lineTo(roadEdgeL,ROAD_BOT+20);
+  X.lineTo(roadEdgeR,ROAD_BOT+20);
+  X.lineTo(roadTopR+10,ROAD_TOP);
   X.closePath();
   X.fill();
 
@@ -344,8 +349,8 @@ function drawRoad(){
     X.fillRect(lxR,y,3*s,2);
   }
 
-  // Ground beyond road
-  X.fillStyle='#050510';
+  // Sidewalk/ground beyond road edges
+  X.fillStyle='#08081a';
   X.fillRect(0,ROAD_BOT,C.width,C.height-ROAD_BOT);
 
   // Ground neon dots scrolling
@@ -373,7 +378,7 @@ function drawObstacle(o){
 
   if(o.type==='billboard'){
     // Neon billboard sign — jump over
-    var w=42*s,h=32*s;
+    var w=55*s,h=40*s;
     // Poles — metallic
     X.fillStyle='rgba(80,100,120,'+s+')';
     X.fillRect(ox-w/2+3,y-h,3*s,h);
@@ -399,7 +404,7 @@ function drawObstacle(o){
   }
   else if(o.type==='barrier'){
     // Laser barrier — slide under
-    var w=55*s,h=38*s;
+    var w=65*s,h=45*s;
     // Poles — neon red
     neonGlow('#ff3355',4,function(){
       X.fillStyle='rgba(255,51,85,'+s*0.8+')';
@@ -427,7 +432,7 @@ function drawObstacle(o){
   }
   else if(o.type==='van'){
     // Neon cyber van — must dodge
-    var w=48*s,h=42*s;
+    var w=60*s,h=55*s;
     // Shadow
     X.fillStyle='rgba(0,0,0,'+s*0.4+')';
     X.beginPath();X.ellipse(ox,y+2,w/2,6*s,0,0,Math.PI*2);X.fill();
@@ -512,8 +517,8 @@ function drawPlayer(){
   px=player.laneX;
 
   var jumpOffset=player.y;
-  var ph=52*s;
-  var pw=30*s;
+  var ph=65*s;
+  var pw=38*s;
   var py=y+jumpOffset;
 
   // Trail effect
