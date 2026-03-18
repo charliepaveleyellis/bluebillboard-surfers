@@ -263,6 +263,11 @@ function slide(){
 // ─── DRAW ─────────────────────────────────────────
 
 function drawSky(){
+  // Dark blue tint over camera feed
+  X.globalAlpha=0.5;
+  X.fillStyle='#001030';
+  X.fillRect(0,0,C.width,C.height);
+
   // Draw original background — visible but camera peeks through
   X.globalAlpha=0.55;
 
