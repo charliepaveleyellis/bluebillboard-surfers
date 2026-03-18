@@ -241,57 +241,60 @@ function drawSky(){
     X.fillRect(sx,sy,1,1);
   }
 
-  // City skyline — two layers scrolling at different parallax speeds
+  // City buildings — placed at world z positions, grow from vanishing point toward you
   var skyY=VP_Y-10;
-  var bw=C.width/12;
+  var buildSpacing=0.5;
+  var firstBuildZ=Math.floor(camZ/buildSpacing)*buildSpacing;
 
-  // Back layer — slow parallax (distant buildings)
-  var backScroll=(camZ*8)%(bw*2);
-  for(var i=-2;i<16;i++){
-    var bx=i*bw-backScroll;
-    var seed=((i+500)*7+3);
-    var bh=15+(seed%5)*12+((seed*13)%4)*8;
-    X.fillStyle='#000a18';
-    X.fillRect(bx-2,skyY-bh,bw-6,bh+10);
-    X.fillStyle='rgba(46,163,242,0.08)';
-    X.fillRect(bx-2,skyY-bh,bw-6,2);
-    // Dim windows
-    for(var wy=skyY-bh+6;wy<skyY;wy+=10){
-      for(var wx=bx+2;wx<bx+bw-8;wx+=9){
-        var wseed=((Math.floor(wx+backScroll)*31+Math.floor(wy)*17)&0xFF);
-        if(wseed>160){
-          X.fillStyle='rgba(46,163,242,0.1)';
-          X.fillRect(wx,wy,2,3);
-        }
+  for(var bi=0;bi<10;bi++){
+    var bWorldZ=firstBuildZ+bi*buildSpacing;
+    var bz=bWorldZ-camZ;
+    if(bz<-0.1||bz>5) continue;
+    var by=zToY(bz);
+    var bs=scaleAt(bz);
+    if(bs<0.03) continue;
+    var ba=Math.min(1,bs*2+0.2);
+
+    // Buildings on left side
+    var bLeftX=laneX(-1.5,bz)-30*bs;
+    // Buildings on right side
+    var bRightX=laneX(1.5,bz)+10*bs;
+
+    var bSeed=Math.abs(Math.floor(bWorldZ*1000)*13+7);
+    var bh=(30+(bSeed%5)*15+((bSeed*7)%4)*10)*bs;
+    var bw2=(20+(bSeed%3)*10)*bs;
+
+    // Left building
+    X.fillStyle='rgba(5,12,25,'+ba+')';
+    X.fillRect(bLeftX-bw2,by-bh,bw2,bh);
+    X.fillStyle='rgba(46,163,242,'+ba*0.15+')';
+    X.fillRect(bLeftX-bw2,by-bh,bw2,Math.max(1,2*bs));
+    // Windows
+    for(var wy=by-bh+4*bs;wy<by-2*bs;wy+=Math.max(4,7*bs)){
+      var wseed2=((bSeed+Math.floor(wy*10))%3);
+      if(wseed2===0){
+        X.fillStyle='rgba(46,163,242,'+ba*0.25+')';
+        X.fillRect(bLeftX-bw2+3*bs,wy,Math.max(2,5*bs),Math.max(2,4*bs));
+      }
+    }
+
+    // Right building
+    X.fillStyle='rgba(5,12,25,'+ba+')';
+    X.fillRect(bRightX,by-bh,bw2,bh);
+    X.fillStyle='rgba(46,163,242,'+ba*0.15+')';
+    X.fillRect(bRightX,by-bh,bw2,Math.max(1,2*bs));
+    // Windows
+    for(var wy=by-bh+4*bs;wy<by-2*bs;wy+=Math.max(4,7*bs)){
+      var wseed3=((bSeed+Math.floor(wy*10)+5)%3);
+      if(wseed3===0){
+        X.fillStyle='rgba(0,255,102,'+ba*0.15+')';
+        X.fillRect(bRightX+3*bs,wy,Math.max(2,5*bs),Math.max(2,4*bs));
       }
     }
   }
 
-  // Front layer — faster parallax (closer buildings)
-  var frontScroll=(camZ*18)%(bw*2);
-  for(var i=-2;i<16;i++){
-    var bx=i*bw+bw/3-frontScroll;
-    var seed=((i+1000)*11+7);
-    var bh=25+(seed%5)*18+((seed*13)%4)*12;
-    X.fillStyle='#001020';
-    X.fillRect(bx-2,skyY-bh,bw-4,bh+10);
-    X.fillStyle='rgba(46,163,242,0.15)';
-    X.fillRect(bx-2,skyY-bh,bw-4,2);
-    // Bright windows
-    for(var wy=skyY-bh+5;wy<skyY;wy+=8){
-      for(var wx=bx+2;wx<bx+bw-6;wx+=7){
-        var wseed=((Math.floor(wx+frontScroll)*31+Math.floor(wy)*17)&0xFF);
-        if(wseed>100){
-          var wc=wseed>200?'rgba(46,163,242,0.25)':'rgba(0,255,102,0.15)';
-          X.fillStyle=wc;
-          X.fillRect(wx,wy,3,4);
-        }
-      }
-    }
-  }
-
-  // Horizon glow — brighter
-  X.fillStyle='rgba(46,163,242,0.08)';
+  // Horizon glow
+  X.fillStyle='rgba(46,163,242,0.06)';
   X.fillRect(0,skyY-5,C.width,30);
 }
 
