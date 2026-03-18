@@ -241,25 +241,28 @@ function drawSky(){
     X.fillRect(sx,sy,1.5,1.5);
   }
 
-  // ── STATIC CITY SKYLINE — full width backdrop ──
-  var skyY=VP_Y+10;
-  var bw=C.width/20;
-  for(var i=0;i<21;i++){
+  // ── CITY SKYLINE — tall buildings filling the horizon ──
+  setupPerspective();
+  var skyBase=VP_Y+15; // where buildings sit on the horizon
+  var bw=C.width/16;
+  for(var i=0;i<17;i++){
     var bx=i*bw;
     var seed=((i*47+13)&0xFF);
-    var bh=30+(seed%6)*12+((seed*3)%5)*8;
-    // Building
+    var bh=50+(seed%6)*25+((seed*3)%5)*15; // taller: 50-165px
+    // Building body
     X.fillStyle='#060e1e';
-    X.fillRect(bx,skyY-bh,bw-2,bh+5);
-    // Rooftop neon
-    X.fillStyle='rgba(46,163,242,0.2)';
-    X.fillRect(bx,skyY-bh,bw-2,2);
-    // Windows
-    for(var wy=skyY-bh+6;wy<skyY-3;wy+=7){
-      for(var wx=bx+3;wx<bx+bw-5;wx+=6){
+    X.fillRect(bx,skyBase-bh,bw-2,bh+20);
+    // Rooftop neon line
+    X.fillStyle='rgba(46,163,242,0.3)';
+    X.fillRect(bx,skyBase-bh,bw-2,2);
+    // Windows — bright grid
+    for(var wy=skyBase-bh+6;wy<skyBase;wy+=7){
+      for(var wx=bx+2;wx<bx+bw-4;wx+=6){
         var ws=((wx*31+wy*17+seed)&0xFF);
-        if(ws>120){
-          X.fillStyle=ws>200?'rgba(46,163,242,0.3)':'rgba(0,255,102,0.15)';
+        if(ws>100){
+          X.fillStyle=ws>200?'rgba(46,163,242,0.35)':
+                     ws>160?'rgba(0,255,102,0.2)':
+                     'rgba(255,221,0,0.15)';
           X.fillRect(wx,wy,3,4);
         }
       }
@@ -267,25 +270,8 @@ function drawSky(){
   }
 
   // Horizon glow
-  X.fillStyle='rgba(46,163,242,0.08)';
-  X.fillRect(0,skyY-8,C.width,25);
-
-  // ── Dark sidewalk areas beside road ──
-  // Left sidewalk
-  X.fillStyle='#080e1a';
-  X.beginPath();
-  X.moveTo(VP_X-8,VP_Y);
-  X.lineTo(0,VP_Y);
-  X.lineTo(0,ROAD_BOT+20);
-  X.lineTo(laneX(-1.5,0)-15,ROAD_BOT+20);
-  X.closePath();X.fill();
-  // Right sidewalk
-  X.beginPath();
-  X.moveTo(VP_X+8,VP_Y);
-  X.lineTo(C.width,VP_Y);
-  X.lineTo(C.width,ROAD_BOT+20);
-  X.lineTo(laneX(1.5,0)+15,ROAD_BOT+20);
-  X.closePath();X.fill();
+  X.fillStyle='rgba(46,163,242,0.1)';
+  X.fillRect(0,skyBase-10,C.width,30);
 }
 
 function drawRoad(){
