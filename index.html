@@ -263,8 +263,8 @@ function slide(){
 // ─── DRAW ─────────────────────────────────────────
 
 function drawSky(){
-  // Draw original background semi-transparent so camera shows through
-  X.globalAlpha=0.2;
+  // Draw original background very transparent so camera dominates
+  X.globalAlpha=0.08;
 
   // Sky gradient — fills top half
   var grad=X.createLinearGradient(0,0,0,C.height*0.5);
@@ -275,7 +275,7 @@ function drawSky(){
   X.fillRect(0,0,C.width,C.height*0.5);
 
   // Stars
-  X.globalAlpha=0.35;
+  X.globalAlpha=0.15;
   for(var i=0;i<50;i++){
     var sx=((i*137+53)%C.width);
     var sy=((i*97+17)%(C.height*0.3));
@@ -288,7 +288,7 @@ function drawSky(){
   setupPerspective();
   var skyBase=VP_Y+20;
 
-  X.globalAlpha=0.18;
+  X.globalAlpha=0.08;
 
   // Pre-defined building layout — varied widths and heights, no gaps
   var buildings=[
@@ -313,14 +313,14 @@ function drawSky(){
 
     // Rooftop neon — only on tall buildings
     if(bh>80){
-      X.globalAlpha=0.45;
+      X.globalAlpha=0.25;
       X.fillStyle='rgba(46,163,242,0.6)';
       X.fillRect(bx,skyBase-bh,bw2,3);
-      X.globalAlpha=0.18;
+      X.globalAlpha=0.08;
     }
 
     // Windows
-    X.globalAlpha=0.4;
+    X.globalAlpha=0.2;
     for(var wy=skyBase-bh+12;wy<skyBase-5;wy+=12){
       for(var wx=bx+4;wx<bx+bw2-4;wx+=9){
         var ws=((Math.floor(wx)*31+Math.floor(wy)*17+i*7)&0xFF);
@@ -333,12 +333,12 @@ function drawSky(){
         }
       }
     }
-    X.globalAlpha=0.18;
+    X.globalAlpha=0.08;
     bx+=bw2;
   }
 
   // Horizon glow
-  X.globalAlpha=0.25;
+  X.globalAlpha=0.12;
   X.fillStyle='rgba(46,163,242,0.15)';
   X.fillRect(0,skyBase-5,C.width,20);
 
@@ -351,7 +351,7 @@ function drawRoad(){
   // Road surface — semi-transparent so camera shows through
   var roadEdgeL=laneX(-1.5,0)-30;
   var roadEdgeR=laneX(1.5,0)+30;
-  X.fillStyle='rgba(10,10,30,0.25)';
+  X.fillStyle='rgba(10,10,30,0.12)';
   X.beginPath();
   X.moveTo(VP_X-5,VP_Y);
   X.lineTo(roadEdgeL,ROAD_BOT+20);
@@ -362,8 +362,8 @@ function drawRoad(){
 
   // Road surface gradient overlay
   var roadGrad=X.createLinearGradient(0,ROAD_TOP,0,ROAD_BOT);
-  roadGrad.addColorStop(0,'rgba(0,30,80,0.06)');
-  roadGrad.addColorStop(1,'rgba(0,30,80,0.15)');
+  roadGrad.addColorStop(0,'rgba(0,30,80,0.03)');
+  roadGrad.addColorStop(1,'rgba(0,30,80,0.08)');
   X.fillStyle=roadGrad;
   X.fill();
 
@@ -417,7 +417,7 @@ function drawRoad(){
   }
 
   // Sidewalk/ground beyond road edges — semi-transparent
-  X.fillStyle='rgba(8,8,26,0.15)';
+  X.fillStyle='rgba(8,8,26,0.06)';
   X.fillRect(0,ROAD_BOT,C.width,C.height-ROAD_BOT);
 
   // ── SIDE SCENERY — big, bright, scrolling toward you ──
@@ -530,7 +530,7 @@ function drawRoad(){
       var wh=Math.max(60,150*bs);
       var ww=Math.max(30,75*bs);
       // Wall
-      X.fillStyle='rgba(12,22,40,'+sa*0.3+')';
+      X.fillStyle='rgba(12,22,40,'+sa*0.12+')';
       X.fillRect(leftX-ww,sy-wh,ww,wh);
       X.fillRect(rightX,sy-wh,ww,wh);
       // Rooftop neon
