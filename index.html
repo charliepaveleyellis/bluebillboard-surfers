@@ -224,7 +224,7 @@ function slide(){
 // ─── DRAW ─────────────────────────────────────────
 
 function drawSky(){
-  // Deep space gradient
+  // Sky gradient — fills top half
   var grad=X.createLinearGradient(0,0,0,C.height*0.5);
   grad.addColorStop(0,'#000510');
   grad.addColorStop(0.5,'#001030');
@@ -233,69 +233,87 @@ function drawSky(){
   X.fillRect(0,0,C.width,C.height*0.5);
 
   // Stars
-  for(var i=0;i<40;i++){
+  for(var i=0;i<50;i++){
     var sx=((i*137+53)%C.width);
-    var sy=((i*97+17)%(C.height*0.35));
-    var sb=0.3+Math.sin(frameCount*0.03+i)*0.2;
+    var sy=((i*97+17)%(C.height*0.3));
+    var sb=0.3+Math.sin(frameCount*0.03+i)*0.25;
     X.fillStyle='rgba(200,220,255,'+sb+')';
-    X.fillRect(sx,sy,1,1);
+    X.fillRect(sx,sy,1.5,1.5);
   }
 
-  // City buildings — placed at world z positions, grow from vanishing point toward you
-  var skyY=VP_Y-10;
-  var buildSpacing=0.5;
+  // ── STATIC CITY SKYLINE — full width backdrop ──
+  var skyY=VP_Y+10;
+  var bw=C.width/20;
+  for(var i=0;i<21;i++){
+    var bx=i*bw;
+    var seed=((i*47+13)&0xFF);
+    var bh=30+(seed%6)*12+((seed*3)%5)*8;
+    // Building
+    X.fillStyle='#060e1e';
+    X.fillRect(bx,skyY-bh,bw-2,bh+5);
+    // Rooftop neon
+    X.fillStyle='rgba(46,163,242,0.2)';
+    X.fillRect(bx,skyY-bh,bw-2,2);
+    // Windows
+    for(var wy=skyY-bh+6;wy<skyY-3;wy+=7){
+      for(var wx=bx+3;wx<bx+bw-5;wx+=6){
+        var ws=((wx*31+wy*17+seed)&0xFF);
+        if(ws>120){
+          X.fillStyle=ws>200?'rgba(46,163,242,0.3)':'rgba(0,255,102,0.15)';
+          X.fillRect(wx,wy,3,4);
+        }
+      }
+    }
+  }
+
+  // Horizon glow
+  X.fillStyle='rgba(46,163,242,0.08)';
+  X.fillRect(0,skyY-8,C.width,25);
+
+  // ── PERSPECTIVE BUILDINGS on road sides — move toward you ──
+  var buildSpacing=0.4;
   var firstBuildZ=Math.floor(camZ/buildSpacing)*buildSpacing;
 
-  for(var bi=0;bi<10;bi++){
+  for(var bi=0;bi<12;bi++){
     var bWorldZ=firstBuildZ+bi*buildSpacing;
     var bz=bWorldZ-camZ;
     if(bz<-0.1||bz>5) continue;
     var by=zToY(bz);
     var bs=scaleAt(bz);
     if(bs<0.03) continue;
-    var ba=Math.min(1,bs*2+0.2);
+    var ba=Math.min(1,bs*2.5+0.3);
 
-    // Buildings on left side
-    var bLeftX=laneX(-1.5,bz)-30*bs;
-    // Buildings on right side
-    var bRightX=laneX(1.5,bz)+10*bs;
+    var bLeftX=laneX(-1.5,bz)-15*bs;
+    var bRightX=laneX(1.5,bz)+5*bs;
 
     var bSeed=Math.abs(Math.floor(bWorldZ*1000)*13+7);
-    var bh=(30+(bSeed%5)*15+((bSeed*7)%4)*10)*bs;
-    var bw2=(20+(bSeed%3)*10)*bs;
+    var bh=(35+(bSeed%5)*18+((bSeed*7)%4)*12)*bs;
+    var bw2=Math.max(8,(25+(bSeed%3)*12)*bs);
 
     // Left building
-    X.fillStyle='rgba(5,12,25,'+ba+')';
+    X.fillStyle='rgba(8,15,30,'+ba+')';
     X.fillRect(bLeftX-bw2,by-bh,bw2,bh);
-    X.fillStyle='rgba(46,163,242,'+ba*0.15+')';
-    X.fillRect(bLeftX-bw2,by-bh,bw2,Math.max(1,2*bs));
-    // Windows
-    for(var wy=by-bh+4*bs;wy<by-2*bs;wy+=Math.max(4,7*bs)){
-      var wseed2=((bSeed+Math.floor(wy*10))%3);
-      if(wseed2===0){
-        X.fillStyle='rgba(46,163,242,'+ba*0.25+')';
-        X.fillRect(bLeftX-bw2+3*bs,wy,Math.max(2,5*bs),Math.max(2,4*bs));
+    X.fillStyle='rgba(46,163,242,'+ba*0.2+')';
+    X.fillRect(bLeftX-bw2,by-bh,bw2,Math.max(2,2*bs));
+    for(var wy=by-bh+4*bs;wy<by-2*bs;wy+=Math.max(5,8*bs)){
+      if(((bSeed+Math.floor(wy*10))%3)===0){
+        X.fillStyle='rgba(46,163,242,'+ba*0.3+')';
+        X.fillRect(bLeftX-bw2+3*bs,wy,Math.max(3,6*bs),Math.max(3,5*bs));
       }
     }
 
     // Right building
-    X.fillStyle='rgba(5,12,25,'+ba+')';
+    X.fillStyle='rgba(8,15,30,'+ba+')';
     X.fillRect(bRightX,by-bh,bw2,bh);
-    X.fillStyle='rgba(46,163,242,'+ba*0.15+')';
-    X.fillRect(bRightX,by-bh,bw2,Math.max(1,2*bs));
-    // Windows
-    for(var wy=by-bh+4*bs;wy<by-2*bs;wy+=Math.max(4,7*bs)){
-      var wseed3=((bSeed+Math.floor(wy*10)+5)%3);
-      if(wseed3===0){
-        X.fillStyle='rgba(0,255,102,'+ba*0.15+')';
-        X.fillRect(bRightX+3*bs,wy,Math.max(2,5*bs),Math.max(2,4*bs));
+    X.fillStyle='rgba(46,163,242,'+ba*0.2+')';
+    X.fillRect(bRightX,by-bh,bw2,Math.max(2,2*bs));
+    for(var wy=by-bh+4*bs;wy<by-2*bs;wy+=Math.max(5,8*bs)){
+      if(((bSeed+Math.floor(wy*10)+5)%3)===0){
+        X.fillStyle='rgba(0,255,102,'+ba*0.2+')';
+        X.fillRect(bRightX+3*bs,wy,Math.max(3,6*bs),Math.max(3,5*bs));
       }
     }
   }
-
-  // Horizon glow
-  X.fillStyle='rgba(46,163,242,0.06)';
-  X.fillRect(0,skyY-5,C.width,30);
 }
 
 function drawRoad(){
