@@ -570,11 +570,12 @@ function checkCollisions(){
   // Only collide when obstacle is right at the player (z near 0, not 0.15)
   var pLane=player.lane; // use ACTUAL lane, not target
 
+  var playerZ=0.15;
   for(var i=0;i<obstacles.length;i++){
     var o=obstacles[i];
     if(o.hit) continue;
-    // Obstacle must be very close (past the player position, z < 0.18 and z > 0.05)
-    if(o.z>0.18||o.z<0.05) continue;
+    // Tight collision zone around player z position
+    if(o.z>playerZ+0.04||o.z<playerZ-0.06) continue;
     if(o.lane!==pLane) continue;
 
     if(o.type==='billboard'){
@@ -586,6 +587,7 @@ function checkCollisions(){
       o.hit=true; crash(); return;
     }
     else if(o.type==='van'){
+      if(player.jumping&&player.y<-20) continue;
       if(player.invincible>0) continue;
       o.hit=true; crash(); return;
     }
@@ -594,7 +596,7 @@ function checkCollisions(){
   for(var i=0;i<coinItems.length;i++){
     var c=coinItems[i];
     if(c.collected) continue;
-    if(c.z>0.20||c.z<0.05) continue;
+    if(c.z>playerZ+0.06||c.z<playerZ-0.06) continue;
     if(c.lane!==pLane) continue;
     c.collected=true;
     coins++;score+=50;
