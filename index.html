@@ -100,12 +100,11 @@ function setupPerspective(){
   LANE_W=C.width*0.28; // lanes are 28% of screen width — fills the screen
 }
 
-function zToY(z){ return ROAD_BOT-(ROAD_BOT-ROAD_TOP)*z; }
-function scaleAt(z){ return Math.max(0,1-z*0.55); }
-function laneX(lane,z){
-  var p=1/(1+z*2.5); // gentler perspective — road stays wider longer
-  return VP_X+lane*LANE_W*p;
-}
+// All three use the same perspective division so everything looks consistent
+function perspT(z){ return 1/(1+z*2.5); }
+function zToY(z){ var p=perspT(z); return VP_Y+(ROAD_BOT-VP_Y)*p; }
+function scaleAt(z){ return Math.max(0,perspT(z)); }
+function laneX(lane,z){ return VP_X+lane*LANE_W*perspT(z); }
 
 // Neon glow helper
 function neonGlow(color,blur,fn){
@@ -279,17 +278,15 @@ function drawSky(){
 function drawRoad(){
   setupPerspective();
 
-  // Road surface — wide, filling the screen
+  // Road surface — fills from vanishing point to bottom
   var roadEdgeL=laneX(-1.5,0)-30;
   var roadEdgeR=laneX(1.5,0)+30;
-  var roadTopL=laneX(-1.5,0.95);
-  var roadTopR=laneX(1.5,0.95);
   X.fillStyle='#111122';
   X.beginPath();
-  X.moveTo(roadTopL-10,ROAD_TOP);
+  X.moveTo(VP_X-5,VP_Y);
   X.lineTo(roadEdgeL,ROAD_BOT+20);
   X.lineTo(roadEdgeR,ROAD_BOT+20);
-  X.lineTo(roadTopR+10,ROAD_TOP);
+  X.lineTo(VP_X+5,VP_Y);
   X.closePath();
   X.fill();
 
@@ -302,7 +299,7 @@ function drawRoad(){
 
   // Scrolling grid lines on road surface
   var gridScroll=(camZ*400)%30;
-  for(var z=0;z<1;z+=0.03){
+  for(var z=0;z<4;z+=0.05){
     var y=zToY(z);
     var s=scaleAt(z);
     var segZ=((z*400+gridScroll)%30)/30;
@@ -315,7 +312,7 @@ function drawRoad(){
 
   // Lane lines — neon dashed, scrolling
   var lineScroll=(camZ*500)%40;
-  for(var z=0;z<1;z+=0.015){
+  for(var z=0;z<4;z+=0.03){
     var y=zToY(z);
     var s=scaleAt(z);
     var segZ=((z*500+lineScroll)%40)/40;
@@ -334,7 +331,7 @@ function drawRoad(){
 
   // Road edges — neon glow lines
   var edgeScroll=(camZ*300)%20;
-  for(var z=0;z<1;z+=0.008){
+  for(var z=0;z<4;z+=0.02){
     var y=zToY(z);
     var s=scaleAt(z);
     var lxL=laneX(-1.5,z)-12*s;
@@ -372,8 +369,7 @@ function drawObstacle(o){
   if(o.z===undefined||!isFinite(o.z)||o.z>1.8) return;
   var y=zToY(o.z);
   var s=scaleAt(o.z);
-  if(s<=0.05) return;
-  s=Math.max(s,0.15);
+  if(s<0.06) return;
   var ox=laneX(o.lane,o.z);
 
   if(o.type==='billboard'){
