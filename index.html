@@ -8,7 +8,12 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Courier New',monospace;overflow:hidden;background:#000;
   touch-action:manipulation;-webkit-user-select:none;user-select:none;}
-canvas{display:block;width:100vw;height:100vh;}
+#arCamera{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+#arCamera.hidden{display:none;}
+.ar-fallback{position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;
+  background:linear-gradient(135deg,#000510 0%,#001030 50%,#002060 100%);}
+.ar-fallback.hidden{display:none;}
+canvas{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0;z-index:1;}
 
 .overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10;
   display:flex;flex-direction:column;justify-content:center;align-items:center;
@@ -29,12 +34,14 @@ canvas{display:block;width:100vw;height:100vh;}
   box-shadow:0 0 15px rgba(46,163,242,0.3);}
 .btn:active{background:#2ea3f2;box-shadow:0 0 25px rgba(46,163,242,0.6);}
 .powered-by{position:fixed;bottom:4px;left:0;right:0;text-align:center;
-  font-size:10px;color:rgba(46,163,242,0.15);letter-spacing:1px;
-  text-transform:uppercase;z-index:3;pointer-events:none;}
+  font-size:10px;color:rgba(46,163,242,0.3);letter-spacing:1px;
+  text-transform:uppercase;z-index:5;pointer-events:none;}
 </style>
 </head>
 <body>
 
+<video id="arCamera" autoplay playsinline muted></video>
+<div class="ar-fallback hidden" id="arFallback"></div>
 <canvas id="game"></canvas>
 
 <div class="overlay" id="startScreen">
@@ -73,6 +80,16 @@ function sfxJump(){playSweep(200,600,'sine',0.15,0.06);}
 function sfxSlide(){playSweep(400,100,'sawtooth',0.12,0.04);}
 function sfxCrash(){playSweep(300,40,'sawtooth',0.4,0.1);snd(80,'square',0.3,0.08);}
 function sfxSwitch(){snd(600,'sine',0.04,0.04);snd(800,'sine',0.03,0.03);}
+
+// ─── AR CAMERA ───────────────────────────────────
+var arCamera=document.getElementById('arCamera');
+var arFallback=document.getElementById('arFallback');
+var arReady=false;
+function initCamera(){
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
+  .then(function(stream){arCamera.srcObject=stream;arReady=true;})
+  .catch(function(){arCamera.classList.add('hidden');arFallback.classList.remove('hidden');});
+}
 
 // ─── CANVAS ───────────────────────────────────────
 var C=document.getElementById('game');
@@ -246,82 +263,43 @@ function slide(){
 // ─── DRAW ─────────────────────────────────────────
 
 function drawSky(){
-  // Sky gradient — fills top half
-  var grad=X.createLinearGradient(0,0,0,C.height*0.5);
-  grad.addColorStop(0,'#000510');
-  grad.addColorStop(0.5,'#001030');
-  grad.addColorStop(1,'#002060');
-  X.fillStyle=grad;
-  X.fillRect(0,0,C.width,C.height*0.5);
-
-  // Stars
-  for(var i=0;i<50;i++){
-    var sx=((i*137+53)%C.width);
-    var sy=((i*97+17)%(C.height*0.3));
-    var sb=0.3+Math.sin(frameCount*0.03+i)*0.25;
-    X.fillStyle='rgba(200,220,255,'+sb+')';
-    X.fillRect(sx,sy,2.5,2.5);
-  }
-
-  // ── CITY SKYLINE — realistic varied buildings ──
+  // AR mode — camera feed is behind the canvas, just add a subtle tinted overlay
   setupPerspective();
-  var skyBase=VP_Y+20;
 
-  // Pre-defined building layout — varied widths and heights, no gaps
-  var buildings=[
-    {w:0.04,h:75},{w:0.06,h:135},{w:0.03,h:60},{w:0.07,h:195},{w:0.05,h:105},
-    {w:0.08,h:240},{w:0.04,h:82},{w:0.06,h:165},{w:0.03,h:68},{w:0.05,h:128},
-    {w:0.07,h:218},{w:0.04,h:90},{w:0.06,h:150},{w:0.08,h:255},{w:0.05,h:112},
-    {w:0.03,h:75},{w:0.07,h:180},{w:0.04,h:98},{w:0.06,h:142},{w:0.05,h:120}
-  ];
-  var bx=0;
-  for(var i=0;i<buildings.length;i++){
-    var bw2=buildings[i].w*C.width;
-    var bh=buildings[i].h;
-    var shade=8+((i*17)%8); // vary the shade slightly per building
+  // Slight dark tint over the whole screen so neon elements pop against real world
+  X.fillStyle='rgba(0,5,20,0.25)';
+  X.fillRect(0,0,C.width,C.height);
 
-    // Building body — flush, no gaps
-    X.fillStyle='rgb('+shade+','+(shade+8)+','+(shade+20)+')';
-    X.fillRect(bx,skyBase-bh,bw2,bh+30);
-
-    // Subtle edge line between buildings
-    X.fillStyle='rgba(20,30,50,0.8)';
-    X.fillRect(bx+bw2-1,skyBase-bh,1,bh+30);
-
-    // Rooftop neon — only on tall buildings
-    if(bh>80){
-      X.fillStyle='rgba(46,163,242,0.6)';
-      X.fillRect(bx,skyBase-bh,bw2,3);
-    }
-
-    // Windows
-    for(var wy=skyBase-bh+12;wy<skyBase-5;wy+=12){
-      for(var wx=bx+4;wx<bx+bw2-4;wx+=9){
-        var ws=((Math.floor(wx)*31+Math.floor(wy)*17+i*7)&0xFF);
-        if(ws>110){
-          X.fillStyle=ws>210?'rgba(46,163,242,0.5)':
-                     ws>170?'rgba(0,255,255,0.3)':
-                     ws>140?'rgba(255,221,0,0.25)':
-                     'rgba(0,255,102,0.2)';
-          X.fillRect(wx,wy,5,6);
-        }
-      }
-    }
-    bx+=bw2;
+  // Scanning grid lines — AR HUD feel
+  X.strokeStyle='rgba(46,163,242,0.06)';
+  X.lineWidth=1;
+  for(var gx=0;gx<C.width;gx+=40){
+    X.beginPath();X.moveTo(gx,0);X.lineTo(gx,C.height);X.stroke();
+  }
+  for(var gy=0;gy<C.height;gy+=40){
+    X.beginPath();X.moveTo(0,gy);X.lineTo(C.width,gy);X.stroke();
   }
 
-  // Horizon glow
-  X.fillStyle='rgba(46,163,242,0.1)';
-  X.fillRect(0,skyBase-5,C.width,20);
+  // Corner brackets — AR targeting feel
+  var bLen=30,bPad=12;
+  X.strokeStyle='rgba(46,163,242,0.3)';X.lineWidth=2;
+  // Top-left
+  X.beginPath();X.moveTo(bPad,bPad+bLen);X.lineTo(bPad,bPad);X.lineTo(bPad+bLen,bPad);X.stroke();
+  // Top-right
+  X.beginPath();X.moveTo(C.width-bPad-bLen,bPad);X.lineTo(C.width-bPad,bPad);X.lineTo(C.width-bPad,bPad+bLen);X.stroke();
+  // Bottom-left
+  X.beginPath();X.moveTo(bPad,C.height-bPad-bLen);X.lineTo(bPad,C.height-bPad);X.lineTo(bPad+bLen,C.height-bPad);X.stroke();
+  // Bottom-right
+  X.beginPath();X.moveTo(C.width-bPad-bLen,C.height-bPad);X.lineTo(C.width-bPad,C.height-bPad);X.lineTo(C.width-bPad,C.height-bPad-bLen);X.stroke();
 }
 
 function drawRoad(){
   setupPerspective();
 
-  // Road surface — fills from vanishing point to bottom
+  // Road surface — semi-transparent so camera shows through
   var roadEdgeL=laneX(-1.5,0)-30;
   var roadEdgeR=laneX(1.5,0)+30;
-  X.fillStyle='#1a1a30';
+  X.fillStyle='rgba(10,10,30,0.45)';
   X.beginPath();
   X.moveTo(VP_X-5,VP_Y);
   X.lineTo(roadEdgeL,ROAD_BOT+20);
@@ -332,8 +310,8 @@ function drawRoad(){
 
   // Road surface gradient overlay
   var roadGrad=X.createLinearGradient(0,ROAD_TOP,0,ROAD_BOT);
-  roadGrad.addColorStop(0,'rgba(0,30,80,0.08)');
-  roadGrad.addColorStop(1,'rgba(0,30,80,0.2)');
+  roadGrad.addColorStop(0,'rgba(0,30,80,0.1)');
+  roadGrad.addColorStop(1,'rgba(0,30,80,0.3)');
   X.fillStyle=roadGrad;
   X.fill();
 
@@ -346,7 +324,7 @@ function drawRoad(){
     if(segZ>0.1) continue;
     var lxL=laneX(-1.5,z)-10*s;
     var lxR=laneX(1.5,z)+10*s;
-    X.fillStyle='rgba(0,61,122,0.06)';
+    X.fillStyle='rgba(46,163,242,0.12)';
     X.fillRect(lxL,y,lxR-lxL,1);
   }
 
@@ -386,8 +364,8 @@ function drawRoad(){
     X.fillRect(lxR,y,3*s,2);
   }
 
-  // Sidewalk/ground beyond road edges
-  X.fillStyle='#08081a';
+  // Sidewalk/ground beyond road edges — semi-transparent
+  X.fillStyle='rgba(8,8,26,0.35)';
   X.fillRect(0,ROAD_BOT,C.width,C.height-ROAD_BOT);
 
   // ── SIDE SCENERY — big, bright, scrolling toward you ──
@@ -500,7 +478,7 @@ function drawRoad(){
       var wh=Math.max(60,150*bs);
       var ww=Math.max(30,75*bs);
       // Wall
-      X.fillStyle='rgba(12,22,40,'+sa+')';
+      X.fillStyle='rgba(12,22,40,'+sa*0.6+')';
       X.fillRect(leftX-ww,sy-wh,ww,wh);
       X.fillRect(rightX,sy-wh,ww,wh);
       // Rooftop neon
@@ -1127,7 +1105,7 @@ function bindBtn(id,fn){
   el.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
   el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();fn();});
 }
-bindBtn('startBtn',startGame);
+bindBtn('startBtn',function(){initCamera();startGame();});
 bindBtn('restartBtn',startGame);
 </script>
 </body>
