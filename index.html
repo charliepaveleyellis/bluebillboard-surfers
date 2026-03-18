@@ -314,7 +314,8 @@ function drawObstacle(o){
   if(o.z===undefined||!isFinite(o.z)||o.z>1.8) return;
   var y=zToY(o.z);
   var s=scaleAt(o.z);
-  if(s<=0) return;
+  if(s<=0.05) return;
+  s=Math.max(s,0.15); // minimum draw scale so distant obstacles are still visible
   var ox=laneX(o.lane,o.z);
 
   if(o.type==='billboard'){
@@ -667,8 +668,8 @@ function gameLoop(){
     }
     if(player.invincible>0) player.invincible--;
 
-    // Move camera forward (player runs toward obstacles)
-    camZ+=speed*0.004;
+    // Move camera forward (player runs toward obstacles) — cap step to prevent skipping
+    camZ+=Math.min(speed*0.004,0.03);
     // Compute screen z for each obstacle/coin and remove passed ones
     for(var i=obstacles.length-1;i>=0;i--){
       obstacles[i].z=obstacles[i].wz-camZ;
