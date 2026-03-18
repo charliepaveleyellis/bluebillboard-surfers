@@ -241,12 +241,11 @@ function drawSky(){
     X.fillRect(sx,sy,1,1);
   }
 
-  // City skyline — neon silhouette with scrolling parallax
+  // City skyline — static (you move, not the background)
   var skyY=VP_Y-10;
   var bw=C.width/15;
-  var skyScroll=(camZ*20)%(bw*2);
-  for(var i=-2;i<18;i++){
-    var bx=i*bw-skyScroll;
+  for(var i=0;i<16;i++){
+    var bx=i*bw;
     var seed=((i+1000)*7+3);
     var bh=20+(seed%5)*15+((seed*13)%4)*10;
 
@@ -630,14 +629,23 @@ function drawPlayer(){
 
   X.restore();
 
-  // Speed lines when moving fast
-  if(speed>8){
-    var lineAlpha=(speed-8)/12*0.3;
-    X.strokeStyle='rgba(46,163,242,'+lineAlpha+')';X.lineWidth=1;
-    for(var sl=0;sl<3;sl++){
-      var slx=px+(sl-1)*15*s;
-      var sly=py-ph*0.5+Math.sin(frameCount*0.3+sl)*10;
-      X.beginPath();X.moveTo(slx,sly);X.lineTo(slx-15-speed,sly);X.stroke();
+  // Running dust/sparks at feet — shows YOU are moving
+  if(!player.jumping&&!player.sliding&&!gameOver&&frameCount%3===0){
+    particles.push({x:px+(Math.random()-0.5)*10,y:y+5,
+      vx:(Math.random()-0.5)*2,vy:-Math.random()*2-1,
+      life:8+Math.random()*5,maxLife:13,size:1.5+Math.random(),color:'rgba(46,163,242,0.5)'});
+  }
+
+  // Speed wind streaks rushing past player (not behind — beside and ahead)
+  if(speed>6&&!gameOver){
+    var lineAlpha=(speed-6)/14*0.25;
+    X.strokeStyle='rgba(150,200,255,'+lineAlpha+')';X.lineWidth=1;
+    for(var sl=0;sl<4;sl++){
+      var slx=px+(sl-1.5)*25*s+(Math.sin(frameCount*0.5+sl*2)*10);
+      var sly=py-ph*0.3-sl*15+Math.sin(frameCount*0.4+sl)*8;
+      var slLen=10+speed*1.5;
+      // Lines rush DOWN past the player (you're running forward into them)
+      X.beginPath();X.moveTo(slx,sly);X.lineTo(slx+(Math.random()-0.5)*4,sly+slLen);X.stroke();
     }
   }
 }
@@ -771,6 +779,15 @@ function gameLoop(){
   frameCount++;
 
   X.clearRect(0,0,C.width,C.height);
+
+  // Subtle camera bob — simulates running motion
+  X.save();
+  if(!gameOver&&!player.jumping){
+    var bobY=Math.sin(frameCount*0.4)*1.5*(speed/MAX_SPEED);
+    var bobX=Math.sin(frameCount*0.2)*0.5*(speed/MAX_SPEED);
+    X.translate(bobX,bobY);
+  }
+
   drawSky();
   drawRoad();
 
@@ -838,6 +855,8 @@ function gameLoop(){
     X.fillRect(0,0,C.width,C.height);
     screenFlash--;
   }
+
+  X.restore(); // end camera bob
 
   if(!gameOver) drawHUD();
 
