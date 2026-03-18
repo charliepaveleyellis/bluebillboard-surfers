@@ -281,7 +281,7 @@ function drawRoad(){
   // Road surface — fills from vanishing point to bottom
   var roadEdgeL=laneX(-1.5,0)-30;
   var roadEdgeR=laneX(1.5,0)+30;
-  X.fillStyle='#111122';
+  X.fillStyle='#1a1a30';
   X.beginPath();
   X.moveTo(VP_X-5,VP_Y);
   X.lineTo(roadEdgeL,ROAD_BOT+20);
@@ -319,7 +319,7 @@ function drawRoad(){
     if(segZ>0.5) continue;
 
     var w=2*s;
-    var alpha=0.25*s;
+    var alpha=Math.min(0.5,0.15+s*0.4);
     // Left lane divider
     var lx1=laneX(-0.5,z);
     X.fillStyle='rgba(46,163,242,'+alpha+')';
@@ -372,99 +372,97 @@ function drawObstacle(o){
   if(s<0.06) return;
   var ox=laneX(o.lane,o.z);
 
+  // Bright alpha — always visible even at distance
+  var a=Math.min(1,s*3+0.4);
+
   if(o.type==='billboard'){
     // Neon billboard sign — jump over
     var w=55*s,h=40*s;
-    // Poles — metallic
-    X.fillStyle='rgba(80,100,120,'+s+')';
+    // Poles
+    X.fillStyle='rgba(120,140,160,'+a+')';
     X.fillRect(ox-w/2+3,y-h,3*s,h);
     X.fillRect(ox+w/2-6*s,y-h,3*s,h);
-    // Sign body — dark with neon border
-    X.fillStyle='rgba(0,15,40,'+s*0.9+')';
+    // Sign body
+    X.fillStyle='rgba(0,30,80,'+a+')';
     X.fillRect(ox-w/2,y-h,w,h*0.6);
-    // Neon border
-    neonGlow('#2ea3f2',6,function(){
-      X.strokeStyle='rgba(46,163,242,'+s*0.8+')';
-      X.lineWidth=2*s;
+    // Bright neon border
+    neonGlow('#2ea3f2',8,function(){
+      X.strokeStyle='rgba(46,163,242,'+a+')';
+      X.lineWidth=Math.max(2,3*s);
       X.strokeRect(ox-w/2,y-h,w,h*0.6);
     });
-    // BB text — glowing
-    X.fillStyle='rgba(46,163,242,'+s+')';
-    X.font='bold '+Math.max(6,9*s)+'px Courier New';
+    // BB text
+    X.fillStyle='rgba(100,200,255,'+a+')';
+    X.font='bold '+Math.max(7,10*s)+'px Courier New';
     X.textAlign='center';X.textBaseline='middle';
     X.fillText('BB',ox,y-h+h*0.3);
     // Scan line
     var scanY=y-h+((frameCount*2+o.wz*100)%(h*0.6));
-    X.fillStyle='rgba(46,163,242,'+s*0.15+')';
-    X.fillRect(ox-w/2+1,scanY,w-2,2*s);
+    X.fillStyle='rgba(46,163,242,'+a*0.3+')';
+    X.fillRect(ox-w/2+1,scanY,w-2,Math.max(2,2*s));
   }
   else if(o.type==='barrier'){
     // Laser barrier — slide under
     var w=65*s,h=45*s;
-    // Poles — neon red
-    neonGlow('#ff3355',4,function(){
-      X.fillStyle='rgba(255,51,85,'+s*0.8+')';
-      X.fillRect(ox-w/2,y-h*1.5,3*s,h*1.5);
-      X.fillRect(ox+w/2-3*s,y-h*1.5,3*s,h*1.5);
+    // Poles — bright red
+    neonGlow('#ff3355',6,function(){
+      X.fillStyle='rgba(255,51,85,'+a+')';
+      X.fillRect(ox-w/2,y-h*1.5,Math.max(3,4*s),h*1.5);
+      X.fillRect(ox+w/2-Math.max(3,4*s),y-h*1.5,Math.max(3,4*s),h*1.5);
     });
-    // Laser beam across top
-    neonGlow('#ff3355',10,function(){
-      X.fillStyle='rgba(255,51,85,'+s*0.7+')';
-      X.fillRect(ox-w/2,y-h*1.5,w,4*s);
+    // Bright laser beam across top
+    neonGlow('#ff3355',12,function(){
+      X.fillStyle='rgba(255,80,100,'+a+')';
+      X.fillRect(ox-w/2,y-h*1.5,w,Math.max(4,5*s));
     });
-    // Beam particles
-    var beamY=y-h*1.5+2*s;
-    for(var bx=ox-w/2;bx<ox+w/2;bx+=8*s){
-      var bp=Math.sin(frameCount*0.2+bx*0.1)*2*s;
-      X.fillStyle='rgba(255,100,130,'+s*0.4+')';
-      X.fillRect(bx,beamY+bp,3*s,2*s);
-    }
-    // Warning stripes on poles
-    for(var sy=y-h*1.5;sy<y;sy+=8*s){
-      X.fillStyle='rgba(255,200,0,'+s*0.2+')';
-      X.fillRect(ox-w/2,sy,3*s,4*s);
-      X.fillRect(ox+w/2-3*s,sy,3*s,4*s);
+    // Warning stripes
+    for(var sy=y-h*1.5;sy<y;sy+=Math.max(6,8*s)){
+      X.fillStyle='rgba(255,200,0,'+a*0.5+')';
+      X.fillRect(ox-w/2,sy,Math.max(3,4*s),Math.max(3,4*s));
+      X.fillRect(ox+w/2-Math.max(3,4*s),sy,Math.max(3,4*s),Math.max(3,4*s));
     }
   }
   else if(o.type==='van'){
-    // Neon cyber van — must dodge
+    // Neon van — must dodge
     var w=60*s,h=55*s;
     // Shadow
-    X.fillStyle='rgba(0,0,0,'+s*0.4+')';
-    X.beginPath();X.ellipse(ox,y+2,w/2,6*s,0,0,Math.PI*2);X.fill();
-    // Body — dark with neon trim
-    X.fillStyle='rgba(0,20,50,'+s*0.9+')';
+    X.fillStyle='rgba(0,0,0,0.3)';
+    X.beginPath();X.ellipse(ox,y+2,w/2,Math.max(3,6*s),0,0,Math.PI*2);X.fill();
+    // Body — solid blue, always visible
+    X.fillStyle='rgba(0,40,100,'+a+')';
     X.fillRect(ox-w/2,y-h,w,h);
     // Roof
-    X.fillStyle='rgba(0,15,40,'+s+')';
+    X.fillStyle='rgba(0,30,80,'+a+')';
     X.fillRect(ox-w/2+3*s,y-h-8*s,w-6*s,10*s);
-    // Neon trim around body
-    neonGlow('#2ea3f2',6,function(){
-      X.strokeStyle='rgba(46,163,242,'+s*0.6+')';
-      X.lineWidth=1.5*s;
+    // Bright neon trim
+    neonGlow('#2ea3f2',8,function(){
+      X.strokeStyle='rgba(46,163,242,'+a+')';
+      X.lineWidth=Math.max(2,2*s);
       X.strokeRect(ox-w/2,y-h,w,h);
     });
-    // Windshield — glowing cyan
-    X.fillStyle='rgba(0,200,255,'+s*0.3+')';
+    // Windshield — bright cyan
+    X.fillStyle='rgba(0,220,255,'+a*0.6+')';
     X.fillRect(ox-w/4,y-h+4*s,w/2,h*0.25);
-    // Headlights
-    neonGlow('#00ffff',8,function(){
-      X.fillStyle='rgba(0,255,255,'+s*0.6+')';
-      X.beginPath();X.arc(ox-w/3,y-2*s,3*s,0,Math.PI*2);X.fill();
-      X.beginPath();X.arc(ox+w/3,y-2*s,3*s,0,Math.PI*2);X.fill();
+    // Headlights — always bright
+    neonGlow('#00ffff',10,function(){
+      X.fillStyle='rgba(0,255,255,'+a+')';
+      var lr=Math.max(3,4*s);
+      X.beginPath();X.arc(ox-w/3,y-2*s,lr,0,Math.PI*2);X.fill();
+      X.beginPath();X.arc(ox+w/3,y-2*s,lr,0,Math.PI*2);X.fill();
     });
-    // BB logo on side
-    X.fillStyle='rgba(46,163,242,'+s*0.8+')';
-    X.font='bold '+Math.max(5,7*s)+'px Courier New';
+    // BB logo
+    X.fillStyle='rgba(100,200,255,'+a+')';
+    X.font='bold '+Math.max(6,8*s)+'px Courier New';
     X.textAlign='center';X.textBaseline='middle';
     X.fillText('BB',ox,y-h*0.35);
-    // Wheels — neon rim
-    X.fillStyle='rgba(20,20,30,'+s+')';
-    X.beginPath();X.arc(ox-w/3,y,5*s,0,Math.PI*2);X.fill();
-    X.beginPath();X.arc(ox+w/3,y,5*s,0,Math.PI*2);X.fill();
-    X.strokeStyle='rgba(46,163,242,'+s*0.3+')';X.lineWidth=1*s;
-    X.beginPath();X.arc(ox-w/3,y,5*s,0,Math.PI*2);X.stroke();
-    X.beginPath();X.arc(ox+w/3,y,5*s,0,Math.PI*2);X.stroke();
+    // Wheels
+    var wr=Math.max(3,5*s);
+    X.fillStyle='rgba(30,30,50,'+a+')';
+    X.beginPath();X.arc(ox-w/3,y,wr,0,Math.PI*2);X.fill();
+    X.beginPath();X.arc(ox+w/3,y,wr,0,Math.PI*2);X.fill();
+    X.strokeStyle='rgba(46,163,242,'+a*0.5+')';X.lineWidth=Math.max(1,1.5*s);
+    X.beginPath();X.arc(ox-w/3,y,wr,0,Math.PI*2);X.stroke();
+    X.beginPath();X.arc(ox+w/3,y,wr,0,Math.PI*2);X.stroke();
   }
 }
 
