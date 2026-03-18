@@ -241,41 +241,55 @@ function drawSky(){
     X.fillRect(sx,sy,1.5,1.5);
   }
 
-  // ── CITY SKYLINE — bright visible buildings ──
+  // ── CITY SKYLINE — realistic varied buildings ──
   setupPerspective();
   var skyBase=VP_Y+20;
-  var bw=C.width/14;
-  for(var i=0;i<15;i++){
-    var bx=i*bw;
-    var seed=((i*47+13)&0xFF);
-    var bh=60+(seed%6)*30+((seed*3)%5)*20;
-    // Building body — visible dark blue (not black)
-    X.fillStyle='#0c1a30';
-    X.fillRect(bx,skyBase-bh,bw-3,bh+25);
-    // Bright rooftop neon line
-    X.fillStyle='rgba(46,163,242,0.7)';
-    X.fillRect(bx,skyBase-bh,bw-3,3);
-    // Side edge glow
-    X.fillStyle='rgba(46,163,242,0.2)';
-    X.fillRect(bx,skyBase-bh,2,bh+25);
-    X.fillRect(bx+bw-5,skyBase-bh,2,bh+25);
-    // Windows — bright and dense
-    for(var wy=skyBase-bh+8;wy<skyBase;wy+=8){
-      for(var wx=bx+4;wx<bx+bw-6;wx+=7){
-        var ws=((wx*31+wy*17+seed)&0xFF);
-        if(ws>80){
-          X.fillStyle=ws>200?'rgba(46,163,242,0.6)':
-                     ws>150?'rgba(0,255,255,0.4)':
-                     ws>120?'rgba(0,255,102,0.3)':
-                     'rgba(255,221,0,0.25)';
-          X.fillRect(wx,wy,4,5);
+
+  // Pre-defined building layout — varied widths and heights, no gaps
+  var buildings=[
+    {w:0.04,h:50},{w:0.06,h:90},{w:0.03,h:40},{w:0.07,h:130},{w:0.05,h:70},
+    {w:0.08,h:160},{w:0.04,h:55},{w:0.06,h:110},{w:0.03,h:45},{w:0.05,h:85},
+    {w:0.07,h:145},{w:0.04,h:60},{w:0.06,h:100},{w:0.08,h:170},{w:0.05,h:75},
+    {w:0.03,h:50},{w:0.07,h:120},{w:0.04,h:65},{w:0.06,h:95},{w:0.05,h:80}
+  ];
+  var bx=0;
+  for(var i=0;i<buildings.length;i++){
+    var bw2=buildings[i].w*C.width;
+    var bh=buildings[i].h;
+    var shade=8+((i*17)%8); // vary the shade slightly per building
+
+    // Building body — flush, no gaps
+    X.fillStyle='rgb('+shade+','+(shade+8)+','+(shade+20)+')';
+    X.fillRect(bx,skyBase-bh,bw2,bh+30);
+
+    // Subtle edge line between buildings
+    X.fillStyle='rgba(20,30,50,0.8)';
+    X.fillRect(bx+bw2-1,skyBase-bh,1,bh+30);
+
+    // Rooftop neon — only on tall buildings
+    if(bh>80){
+      X.fillStyle='rgba(46,163,242,0.6)';
+      X.fillRect(bx,skyBase-bh,bw2,2);
+    }
+
+    // Windows
+    for(var wy=skyBase-bh+8;wy<skyBase-5;wy+=8){
+      for(var wx=bx+3;wx<bx+bw2-3;wx+=6){
+        var ws=((Math.floor(wx)*31+Math.floor(wy)*17+i*7)&0xFF);
+        if(ws>110){
+          X.fillStyle=ws>210?'rgba(46,163,242,0.5)':
+                     ws>170?'rgba(0,255,255,0.3)':
+                     ws>140?'rgba(255,221,0,0.25)':
+                     'rgba(0,255,102,0.2)';
+          X.fillRect(wx,wy,3,4);
         }
       }
     }
+    bx+=bw2;
   }
 
-  // Bright horizon glow line
-  X.fillStyle='rgba(46,163,242,0.15)';
+  // Horizon glow
+  X.fillStyle='rgba(46,163,242,0.1)';
   X.fillRect(0,skyBase-5,C.width,20);
 }
 
