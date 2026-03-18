@@ -99,10 +99,11 @@ function setupPerspective(){
 function zToY(z){ return ROAD_BOT-(ROAD_BOT-ROAD_TOP)*z; }
 // Scale at a given z — gentler falloff so objects visible from further away
 function scaleAt(z){ return Math.max(0,1-z*0.55); }
-// Lane X position at a given z — straight perspective lines toward vanishing point
+// Lane X position at a given z — proper perspective so objects travel in straight screen lines
 function laneX(lane,z){
-  var s=scaleAt(z);
-  return VP_X+lane*LANE_W*s;
+  // Use perspective division: at z=0 full width, converges to VP_X at infinity
+  var p=1/(1+z*3);
+  return VP_X+lane*LANE_W*p;
 }
 
 // ─── STATE ────────────────────────────────────────
