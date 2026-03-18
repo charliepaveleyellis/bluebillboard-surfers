@@ -241,28 +241,48 @@ function drawSky(){
     X.fillRect(sx,sy,1,1);
   }
 
-  // City skyline — static (you move, not the background)
+  // City skyline — two layers scrolling at different parallax speeds
   var skyY=VP_Y-10;
-  var bw=C.width/15;
-  for(var i=0;i<16;i++){
-    var bx=i*bw;
-    var seed=((i+1000)*7+3);
-    var bh=20+(seed%5)*15+((seed*13)%4)*10;
+  var bw=C.width/12;
 
-    // Building body — dark with blue tint
+  // Back layer — slow parallax (distant buildings)
+  var backScroll=(camZ*8)%(bw*2);
+  for(var i=-2;i<16;i++){
+    var bx=i*bw-backScroll;
+    var seed=((i+500)*7+3);
+    var bh=15+(seed%5)*12+((seed*13)%4)*8;
+    X.fillStyle='#000a18';
+    X.fillRect(bx-2,skyY-bh,bw-6,bh+10);
+    X.fillStyle='rgba(46,163,242,0.08)';
+    X.fillRect(bx-2,skyY-bh,bw-6,2);
+    // Dim windows
+    for(var wy=skyY-bh+6;wy<skyY;wy+=10){
+      for(var wx=bx+2;wx<bx+bw-8;wx+=9){
+        var wseed=((Math.floor(wx+backScroll)*31+Math.floor(wy)*17)&0xFF);
+        if(wseed>160){
+          X.fillStyle='rgba(46,163,242,0.1)';
+          X.fillRect(wx,wy,2,3);
+        }
+      }
+    }
+  }
+
+  // Front layer — faster parallax (closer buildings)
+  var frontScroll=(camZ*18)%(bw*2);
+  for(var i=-2;i<16;i++){
+    var bx=i*bw+bw/3-frontScroll;
+    var seed=((i+1000)*11+7);
+    var bh=25+(seed%5)*18+((seed*13)%4)*12;
     X.fillStyle='#001020';
     X.fillRect(bx-2,skyY-bh,bw-4,bh+10);
-
-    // Neon outline on rooftop
     X.fillStyle='rgba(46,163,242,0.15)';
     X.fillRect(bx-2,skyY-bh,bw-4,2);
-
-    // Glowing windows
+    // Bright windows
     for(var wy=skyY-bh+5;wy<skyY;wy+=8){
       for(var wx=bx+2;wx<bx+bw-6;wx+=7){
-        var wseed=((Math.floor(wx)*31+Math.floor(wy)*17)&0xFF);
+        var wseed=((Math.floor(wx+frontScroll)*31+Math.floor(wy)*17)&0xFF);
         if(wseed>100){
-          var wc=wseed>200?'rgba(46,163,242,0.2)':'rgba(0,255,102,0.1)';
+          var wc=wseed>200?'rgba(46,163,242,0.25)':'rgba(0,255,102,0.15)';
           X.fillStyle=wc;
           X.fillRect(wx,wy,3,4);
         }
@@ -270,8 +290,8 @@ function drawSky(){
     }
   }
 
-  // Horizon glow
-  X.fillStyle='rgba(46,163,242,0.05)';
+  // Horizon glow — brighter
+  X.fillStyle='rgba(46,163,242,0.08)';
   X.fillRect(0,skyY-5,C.width,30);
 }
 
@@ -555,23 +575,24 @@ function drawCoin(c){
   var s=scaleAt(c.z);
   if(s<=0) return;
   var cx=laneX(c.lane,c.z);
-  var r=7*s;
+  var r=Math.max(4,8*s);
   var bob=Math.sin(frameCount*0.12+c.wz*20)*3*s;
-  var spin=Math.sin(frameCount*0.08+c.wz*10)*0.3+0.7; // pulsing scale
+  var spin=Math.sin(frameCount*0.08+c.wz*10)*0.3+0.7;
+  var ca=Math.min(1,s*3+0.5); // always bright
 
-  // Outer glow
-  neonGlow('#ffdd00',10,function(){
-    X.fillStyle='rgba(255,221,0,'+s*0.6+')';
+  // Big outer glow
+  neonGlow('#ffdd00',14,function(){
+    X.fillStyle='rgba(255,221,0,'+ca+')';
     X.beginPath();X.arc(cx,y-22*s+bob,r*spin,0,Math.PI*2);X.fill();
   });
 
-  // Inner bright core
-  X.fillStyle='rgba(255,240,100,'+s+')';
-  X.beginPath();X.arc(cx,y-22*s+bob,r*0.6*spin,0,Math.PI*2);X.fill();
+  // Bright white core
+  X.fillStyle='rgba(255,255,200,'+ca+')';
+  X.beginPath();X.arc(cx,y-22*s+bob,r*0.5*spin,0,Math.PI*2);X.fill();
 
-  // Data symbol
-  X.fillStyle='rgba(180,120,0,'+s+')';
-  X.font='bold '+Math.max(4,6*s)+'px Courier New';
+  // $ symbol — dark on bright
+  X.fillStyle='rgba(160,100,0,'+ca+')';
+  X.font='bold '+Math.max(6,8*s)+'px Courier New';
   X.textAlign='center';X.textBaseline='middle';
   X.fillText('$',cx,y-22*s+bob);
 }
