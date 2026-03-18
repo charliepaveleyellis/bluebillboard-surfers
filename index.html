@@ -350,17 +350,97 @@ function drawRoad(){
   X.fillStyle='#08081a';
   X.fillRect(0,ROAD_BOT,C.width,C.height-ROAD_BOT);
 
-  // Ground neon dots scrolling
-  var groundScroll=(camZ*80)%20;
-  for(var gy=ROAD_BOT+3;gy<C.height;gy+=12){
-    for(var gx=0;gx<C.width;gx+=20){
-      var gy2=gy+groundScroll;
-      if(gy2>C.height) gy2-=C.height-ROAD_BOT;
-      var gseed=((gx*17+Math.floor(gy)*31)&0xFF);
-      if(gseed>210){
-        X.fillStyle='rgba(46,163,242,0.04)';
-        X.fillRect(gx,gy2,1,1);
+  // ── SIDE SCENERY — scrolls toward player for motion feel ──
+  var scenerySpacing=0.35; // world z gap between scenery items
+  var sceneryStart=camZ%scenerySpacing; // offset for scrolling
+
+  for(var sz=sceneryStart;sz<4;sz+=scenerySpacing){
+    var sy=zToY(sz);
+    var ss=scaleAt(sz);
+    if(ss<0.04) continue;
+    var sa=Math.min(1,ss*2+0.3);
+
+    // Left side scenery
+    var leftX=laneX(-1.5,sz)-20*ss;
+    // Right side scenery
+    var rightX=laneX(1.5,sz)+20*ss;
+
+    var seed=Math.floor((sz+camZ)*100)%7;
+
+    if(seed<2){
+      // Lamp post
+      var lh=35*ss;
+      X.fillStyle='rgba(100,120,140,'+sa+')';
+      X.fillRect(leftX,sy-lh,Math.max(2,2*ss),lh);
+      X.fillRect(rightX,sy-lh,Math.max(2,2*ss),lh);
+      // Lamp glow
+      neonGlow('#ffdd00',6,function(){
+        X.fillStyle='rgba(255,221,0,'+sa*0.8+')';
+        var lr=Math.max(2,3*ss);
+        X.beginPath();X.arc(leftX+1,sy-lh,lr,0,Math.PI*2);X.fill();
+        X.beginPath();X.arc(rightX+1,sy-lh,lr,0,Math.PI*2);X.fill();
+      });
+    }
+    else if(seed<4){
+      // Neon sign / small billboard on the side
+      var sw=20*ss,sh=12*ss;
+      X.fillStyle='rgba(0,20,50,'+sa+')';
+      X.fillRect(leftX-sw,sy-25*ss,sw,sh);
+      X.fillRect(rightX,sy-25*ss,sw,sh);
+      // Neon border
+      X.strokeStyle='rgba(46,163,242,'+sa*0.6+')';
+      X.lineWidth=Math.max(1,1.5*ss);
+      X.strokeRect(leftX-sw,sy-25*ss,sw,sh);
+      X.strokeRect(rightX,sy-25*ss,sw,sh);
+      // Post
+      X.fillStyle='rgba(80,90,100,'+sa+')';
+      X.fillRect(leftX-2,sy-25*ss+sh,Math.max(2,2*ss),25*ss-sh);
+      X.fillRect(rightX+sw/2,sy-25*ss+sh,Math.max(2,2*ss),25*ss-sh);
+    }
+    else if(seed<5){
+      // Fence / barrier
+      var fh=8*ss;
+      X.fillStyle='rgba(60,70,80,'+sa*0.6+')';
+      X.fillRect(leftX-15*ss,sy-fh,15*ss,Math.max(2,2*ss));
+      X.fillRect(rightX,sy-fh,15*ss,Math.max(2,2*ss));
+      // Posts
+      X.fillRect(leftX-15*ss,sy-fh,Math.max(2,2*ss),fh);
+      X.fillRect(leftX,sy-fh,Math.max(2,2*ss),fh);
+      X.fillRect(rightX,sy-fh,Math.max(2,2*ss),fh);
+      X.fillRect(rightX+15*ss,sy-fh,Math.max(2,2*ss),fh);
+    }
+    else if(seed<6){
+      // Traffic cone / bollard
+      neonGlow('#ff8800',4,function(){
+        X.fillStyle='rgba(255,136,0,'+sa+')';
+        var cr=Math.max(2,3*ss);
+        X.beginPath();X.arc(leftX,sy,cr,0,Math.PI*2);X.fill();
+        X.beginPath();X.arc(rightX,sy,cr,0,Math.PI*2);X.fill();
+      });
+      // Reflective stripe
+      X.fillStyle='rgba(255,255,255,'+sa*0.5+')';
+      X.fillRect(leftX-Math.max(1,2*ss),sy-Math.max(2,4*ss),Math.max(2,4*ss),Math.max(1,1*ss));
+      X.fillRect(rightX-Math.max(1,2*ss),sy-Math.max(2,4*ss),Math.max(2,4*ss),Math.max(1,1*ss));
+    }
+    else {
+      // Building edge / wall segment
+      var bh=40*ss;
+      X.fillStyle='rgba(15,20,35,'+sa+')';
+      X.fillRect(leftX-25*ss,sy-bh,25*ss,bh);
+      X.fillRect(rightX,sy-bh,25*ss,bh);
+      // Window lights
+      for(var wy=0;wy<3;wy++){
+        var wAlpha=((Math.floor(sz*100)+wy*37)%3===0)?sa*0.4:0;
+        if(wAlpha>0){
+          X.fillStyle='rgba(46,163,242,'+wAlpha+')';
+          X.fillRect(leftX-20*ss,sy-bh+5*ss+wy*12*ss,8*ss,6*ss);
+          X.fillRect(rightX+5*ss,sy-bh+5*ss+wy*12*ss,8*ss,6*ss);
+        }
       }
+      // Rooftop neon line
+      X.fillStyle='rgba(46,163,242,'+sa*0.3+')';
+      X.fillRect(leftX-25*ss,sy-bh,25*ss,Math.max(1,2*ss));
+      X.fillRect(rightX,sy-bh,25*ss,Math.max(1,2*ss));
     }
   }
 }
