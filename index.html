@@ -311,6 +311,7 @@ function drawRoad(){
 function drawObstacle(o){
   var y=zToY(o.z);
   var s=scaleAt(o.z);
+  if(s<=0) return;
   var ox=laneX(o.lane,o.z);
 
   if(o.type==='billboard'){
@@ -384,6 +385,7 @@ function drawObstacle(o){
 function drawCoin(c){
   var y=zToY(c.z);
   var s=scaleAt(c.z);
+  if(s<=0) return;
   var cx=laneX(c.lane,c.z);
   var r=6*s;
   var bob=Math.sin(frameCount*0.1+c.z*20)*3*s;
