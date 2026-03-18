@@ -123,6 +123,7 @@ var coinItems=[];
 var particles=[];
 var lastSpawnDist=0;
 var SPAWN_GAP=25;
+var camZ=0; // camera world position — moves forward as player runs
 
 // Swipe
 var swipeX=0,swipeY=0,swiping=false;
@@ -143,40 +144,40 @@ function spawnRow(){
     // Single obstacle in random lane (easier — less common later)
     var lane=LANES[Math.floor(Math.random()*3)];
     var type=Math.random()<0.5?'billboard':'barrier';
-    obstacles.push({lane:lane,z:1.6,type:type,hit:false});
+    obstacles.push({lane:lane,wz:camZ+1.6,type:type,hit:false});
   } else if(r<0.45){
     // Van blocks one lane
     var lane=LANES[Math.floor(Math.random()*3)];
-    obstacles.push({lane:lane,z:1.6,type:'van',hit:false});
+    obstacles.push({lane:lane,wz:camZ+1.6,type:'van',hit:false});
   } else if(r<0.65+diff*0.1){
     // Two obstacles, different lanes (more common later)
     var lanes=[0,1,2];
     var l1=lanes.splice(Math.floor(Math.random()*3),1)[0];
     var l2=lanes[Math.floor(Math.random()*2)];
     obstacles.push({lane:LANES[l1],z:1.1,type:Math.random()<0.5?'billboard':'van',hit:false});
-    obstacles.push({lane:LANES[l2],z:1.62,type:Math.random()<0.5?'barrier':'billboard',hit:false});
+    obstacles.push({lane:LANES[l2],wz:camZ+1.62,type:Math.random()<0.5?'barrier':'billboard',hit:false});
   } else if(r<0.75+diff*0.15){
     // Two vans — only one lane free (hard — more common with distance)
     var freeLane=Math.floor(Math.random()*3);
     for(var i=0;i<3;i++){
-      if(i!==freeLane) obstacles.push({lane:LANES[i],z:1.6,type:'van',hit:false});
+      if(i!==freeLane) obstacles.push({lane:LANES[i],wz:camZ+1.6,type:'van',hit:false});
     }
   } else if(r<0.8+diff*0.05){
     // Jump-slide combo: billboard in one lane, barrier in another
     var lanes=[0,1,2];
     var l1=lanes.splice(Math.floor(Math.random()*3),1)[0];
     var l2=lanes[Math.floor(Math.random()*2)];
-    obstacles.push({lane:LANES[l1],z:1.6,type:'billboard',hit:false});
-    obstacles.push({lane:LANES[l2],z:1.6,type:'barrier',hit:false});
+    obstacles.push({lane:LANES[l1],wz:camZ+1.6,type:'billboard',hit:false});
+    obstacles.push({lane:LANES[l2],wz:camZ+1.6,type:'barrier',hit:false});
     // Third lane gets a coin reward
     var l3;
     for(var i=0;i<3;i++){if(i!==l1&&i!==l2){l3=i;break;}}
-    coinItems.push({lane:LANES[l3],z:1.6,collected:false});
+    coinItems.push({lane:LANES[l3],wz:camZ+1.6,collected:false});
   } else {
     // Coin row
     var lane=LANES[Math.floor(Math.random()*3)];
     for(var i=0;i<5;i++){
-      coinItems.push({lane:lane,z:1.6+i*0.04,collected:false});
+      coinItems.push({lane:lane,wz:camZ+1.6+i*0.04,collected:false});
     }
   }
 }
@@ -662,13 +663,15 @@ function gameLoop(){
     }
     if(player.invincible>0) player.invincible--;
 
-    // Move obstacles toward player
+    // Move camera forward (player runs toward obstacles)
+    camZ+=speed*0.004;
+    // Compute screen z for each obstacle/coin and remove passed ones
     for(var i=obstacles.length-1;i>=0;i--){
-      obstacles[i].z-=speed*0.004;
+      obstacles[i].z=obstacles[i].wz-camZ;
       if(obstacles[i].z<-0.1) obstacles.splice(i,1);
     }
     for(var i=coinItems.length-1;i>=0;i--){
-      coinItems[i].z-=speed*0.004;
+      coinItems[i].z=coinItems[i].wz-camZ;
       if(coinItems[i].z<-0.1) coinItems.splice(i,1);
     }
 
@@ -717,7 +720,7 @@ function startGame(){
 
     score=0;coins=0;distance=0;speed=BASE_SPEED;frameCount=0;
     gameOver=false;
-    obstacles=[];coinItems=[];particles=[];lastSpawnDist=0;
+    obstacles=[];coinItems=[];particles=[];lastSpawnDist=0;camZ=0;
     player.lane=0;player.targetLane=0;player.y=0;player.vy=0;
     player.jumping=false;player.sliding=false;player.slideTimer=0;
     player.switchAnim=0;player.invincible=0;
