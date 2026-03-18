@@ -270,87 +270,22 @@ function drawSky(){
   X.fillStyle='rgba(46,163,242,0.08)';
   X.fillRect(0,skyY-8,C.width,25);
 
-  // ── CONTINUOUS BUILDING WALLS along both sides of road ──
-  // Draw as solid trapezoids following the road perspective
-
-  // Left wall — from screen edge to road left edge
-  X.fillStyle='#0a1225';
+  // ── Dark sidewalk areas beside road ──
+  // Left sidewalk
+  X.fillStyle='#080e1a';
   X.beginPath();
-  X.moveTo(0,VP_Y);                                    // top-left (horizon)
-  X.lineTo(0,ROAD_BOT+20);                             // bottom-left
-  X.lineTo(laneX(-1.5,0)-15,ROAD_BOT+20);              // bottom-right (near road edge)
-  X.lineTo(VP_X-8,VP_Y);                               // top-right (vanishing point)
+  X.moveTo(VP_X-8,VP_Y);
+  X.lineTo(0,VP_Y);
+  X.lineTo(0,ROAD_BOT+20);
+  X.lineTo(laneX(-1.5,0)-15,ROAD_BOT+20);
   X.closePath();X.fill();
-
-  // Right wall
-  X.fillStyle='#0a1225';
+  // Right sidewalk
   X.beginPath();
-  X.moveTo(C.width,VP_Y);
+  X.moveTo(VP_X+8,VP_Y);
+  X.lineTo(C.width,VP_Y);
   X.lineTo(C.width,ROAD_BOT+20);
   X.lineTo(laneX(1.5,0)+15,ROAD_BOT+20);
-  X.lineTo(VP_X+8,VP_Y);
   X.closePath();X.fill();
-
-  // Neon edge lines on walls facing the road
-  X.strokeStyle='rgba(46,163,242,0.4)';X.lineWidth=2;
-  X.beginPath();X.moveTo(VP_X-8,VP_Y);X.lineTo(laneX(-1.5,0)-15,ROAD_BOT+20);X.stroke();
-  X.strokeStyle='rgba(0,255,255,0.3)';
-  X.beginPath();X.moveTo(VP_X+8,VP_Y);X.lineTo(laneX(1.5,0)+15,ROAD_BOT+20);X.stroke();
-
-  // Windows on walls — rows that follow perspective
-  var winScroll=(camZ*300)%15;
-  for(var z=0;z<4;z+=0.08){
-    var wy=zToY(z);
-    var ws=scaleAt(z);
-    if(ws<0.03) continue;
-    var segZ=((z*300+winScroll)%15)/15;
-    if(segZ>0.6) continue; // spacing between window rows
-
-    var roadL=laneX(-1.5,z)-12*ws;
-    var roadR=laneX(1.5,z)+12*ws;
-    var winSize=Math.max(3,6*ws);
-    var winAlpha=Math.min(0.5,ws+0.15);
-
-    // Left wall windows — multiple columns
-    for(var col=0;col<4;col++){
-      var wx=roadL-winSize-(col*(winSize+Math.max(3,5*ws)));
-      if(wx<0) break;
-      var wseed=((Math.floor(z*100)*7+col*13)&0xFF);
-      if(wseed>90){
-        var wc=wseed>200?'rgba(46,163,242,'+winAlpha+')':
-               wseed>150?'rgba(0,255,102,'+winAlpha*0.5+')':
-               'rgba(255,221,0,'+winAlpha*0.4+')';
-        X.fillStyle=wc;
-        X.fillRect(wx,wy-winSize/2,winSize,winSize);
-      }
-    }
-
-    // Right wall windows
-    for(var col=0;col<4;col++){
-      var wx=roadR+Math.max(3,4*ws)+(col*(winSize+Math.max(3,5*ws)));
-      if(wx+winSize>C.width) break;
-      var wseed=((Math.floor(z*100)*11+col*17+5)&0xFF);
-      if(wseed>90){
-        var wc=wseed>200?'rgba(0,255,255,'+winAlpha+')':
-               wseed>150?'rgba(255,51,85,'+winAlpha*0.4+')':
-               'rgba(46,163,242,'+winAlpha*0.5+')';
-        X.fillStyle=wc;
-        X.fillRect(wx,wy-winSize/2,winSize,winSize);
-      }
-    }
-  }
-
-  // Horizontal floor lines on walls (perspective depth cue)
-  for(var z=0;z<4;z+=0.3){
-    var fy=zToY(z);
-    var fs=scaleAt(z);
-    if(fs<0.03) continue;
-    var roadL=laneX(-1.5,z)-12*fs;
-    var roadR=laneX(1.5,z)+12*fs;
-    X.fillStyle='rgba(46,163,242,0.08)';
-    X.fillRect(0,fy,roadL,1);
-    X.fillRect(roadR,fy,C.width-roadR,1);
-  }
 }
 
 function drawRoad(){
