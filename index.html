@@ -350,22 +350,25 @@ function drawRoad(){
   X.fillStyle='#08081a';
   X.fillRect(0,ROAD_BOT,C.width,C.height-ROAD_BOT);
 
-  // ── SIDE SCENERY — scrolls toward player for motion feel ──
-  var scenerySpacing=0.35; // world z gap between scenery items
-  var sceneryStart=camZ%scenerySpacing; // offset for scrolling
+  // ── SIDE SCENERY — fixed world positions, scrolls with camZ ──
+  var scenerySpacing=0.35;
+  // Find the first world position ahead of camera
+  var firstWorldZ=Math.floor(camZ/scenerySpacing)*scenerySpacing;
 
-  for(var sz=sceneryStart;sz<4;sz+=scenerySpacing){
+  for(var si=0;si<12;si++){
+    var worldZ=firstWorldZ+si*scenerySpacing;
+    var sz=worldZ-camZ; // screen z = world position minus camera
+    if(sz<-0.1||sz>4) continue;
     var sy=zToY(sz);
     var ss=scaleAt(sz);
     if(ss<0.04) continue;
     var sa=Math.min(1,ss*2+0.3);
 
-    // Left side scenery
     var leftX=laneX(-1.5,sz)-20*ss;
-    // Right side scenery
     var rightX=laneX(1.5,sz)+20*ss;
 
-    var seed=Math.floor((sz+camZ)*100)%7;
+    // Seed from world position so scenery type is stable as it scrolls
+    var seed=Math.abs(Math.floor(worldZ*1000)*7+13)%7;
 
     if(seed<2){
       // Lamp post
@@ -430,7 +433,7 @@ function drawRoad(){
       X.fillRect(rightX,sy-bh,25*ss,bh);
       // Window lights
       for(var wy=0;wy<3;wy++){
-        var wAlpha=((Math.floor(sz*100)+wy*37)%3===0)?sa*0.4:0;
+        var wAlpha=((Math.floor(worldZ*100)+wy*37)%3===0)?sa*0.4:0;
         if(wAlpha>0){
           X.fillStyle='rgba(46,163,242,'+wAlpha+')';
           X.fillRect(leftX-20*ss,sy-bh+5*ss+wy*12*ss,8*ss,6*ss);
