@@ -154,7 +154,7 @@ function spawnRow(){
     var lanes=[0,1,2];
     var l1=lanes.splice(Math.floor(Math.random()*3),1)[0];
     var l2=lanes[Math.floor(Math.random()*2)];
-    obstacles.push({lane:LANES[l1],z:1.1,type:Math.random()<0.5?'billboard':'van',hit:false});
+    obstacles.push({lane:LANES[l1],wz:camZ+1.6,type:Math.random()<0.5?'billboard':'van',hit:false});
     obstacles.push({lane:LANES[l2],wz:camZ+1.62,type:Math.random()<0.5?'barrier':'billboard',hit:false});
   } else if(r<0.75+diff*0.15){
     // Two vans — only one lane free (hard — more common with distance)
@@ -575,6 +575,7 @@ function checkCollisions(){
   for(var i=0;i<obstacles.length;i++){
     var o=obstacles[i];
     if(o.hit) continue;
+    if(!isFinite(o.z)) continue;
     // Tight collision zone around player z position
     if(o.z>playerZ+0.04||o.z<playerZ-0.06) continue;
     if(o.lane!==pLane) continue;
